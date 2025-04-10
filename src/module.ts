@@ -24,3 +24,5 @@ export default defineNuxtModule<ModuleOptions>({
     addImportsDir(resolver.resolve('runtime/composables'))
   },
 })
+
+export { Entity, Login, User, ApiError, Page, Sort, Pageable, Filters, FilterItem, Constraint, LoginService, Service, SingleQuery, MultipleQuery, PaginatedQuery } from './runtime/types'
