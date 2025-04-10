@@ -1,6 +1,6 @@
 {
   "name": "gen-query",
-  "version": "1.0.28",
+  "version": "1.0.29",
   "description": "Query with tanstack using generics",
   "repository": {
     "type": "git",

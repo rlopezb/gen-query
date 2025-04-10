@@ -1,8 +1,8 @@
 import type { FetchOptions } from 'ofetch'
 import type { $Fetch } from 'nitropack'
 import { computed } from 'vue'
-import type { ApiError } from '../types'
 import { useRuntimeConfig } from 'nuxt/app'
+import type { ApiError } from '../types'
 
 export const useQueryFetch = <T> (options?: FetchOptions): $Fetch<T> => {
   const { baseURL } = useRuntimeConfig().public.genQuery as { baseURL: string }
