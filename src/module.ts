@@ -20,6 +20,6 @@ export default defineNuxtModule<ModuleOptions>({
     }
     const resolver = createResolver(import.meta.url)
     await installModule('@hebilicious/vue-query-nuxt')
-    addImportsDir(resolver.resolve('.runtime/composables'))
+    addImportsDir(resolver.resolve('runtime/composables'))
   },
 })
