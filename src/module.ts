@@ -1,11 +1,10 @@
 import { defineNuxtModule, createResolver, addImportsDir, installModule } from '@nuxt/kit'
+import type { Login, User } from './runtime/utils'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
   baseURL: string
 }
-
-export type * from './runtime/utils'
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -23,3 +22,5 @@ export default defineNuxtModule<ModuleOptions>({
     addImportsDir(resolver.resolve('runtime/composables'))
   },
 })
+
+export type { Login, User }
