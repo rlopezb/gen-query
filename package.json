@@ -13,7 +13,8 @@
   "exports": {
     ".": {
       "types": "./dist/types.d.mts",
-      "import": "./dist/module.mjs"
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.mjs"
     }
   },
   "main": "./dist/module.mjs",
