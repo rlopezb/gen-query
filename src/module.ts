@@ -1,5 +1,4 @@
 import { defineNuxtModule, createResolver, addImportsDir, installModule } from '@nuxt/kit'
-import type { Login, User } from './runtime/utils'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -23,4 +22,4 @@ export default defineNuxtModule<ModuleOptions>({
   },
 })
 
-export type { Login, User }
+export type { Login, User, Entity } from './runtime/utils'
