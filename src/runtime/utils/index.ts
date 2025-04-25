@@ -212,12 +212,12 @@ export class LoginQuery {
   protected loginService: LoginService
   public read: UseQueryReturnType<User, Error>
 
-  constructor(protected login: Login | null) {
+  constructor(protected login: Ref<Login | null>) {
     this.login = login
     this.loginService = new LoginService('login')
     this.read = useQuery({
       queryKey: ['login', this.login],
-      queryFn: async () => await this.loginService.login(this.login!),
+      queryFn: async () => await this.loginService.login(this.login.value!),
       enabled: this.login !== null,
     })
   }
