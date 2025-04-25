@@ -208,6 +208,21 @@ class BaseQuery<T extends Entity<K>, K> {
   })
 }
 
+export class LoginQuery {
+  protected loginService: LoginService
+  public read: UseQueryReturnType<User, Error>
+
+  constructor(protected login: Login | null) {
+    this.login = login
+    this.loginService = new LoginService('login')
+    this.read = useQuery({
+      queryKey: ['login', this.login],
+      queryFn: async () => await this.loginService.login(this.login!),
+      enabled: this.login !== null,
+    })
+  }
+}
+
 export class SingleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
   id: Ref<K>
   public read: UseQueryReturnType<T, ApiError>
