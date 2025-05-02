@@ -218,7 +218,7 @@ export class LoginQuery {
     this.read = useQuery({
       queryKey: ['login', this.login],
       queryFn: async () => await this.loginService.login(this.login.value!),
-      enabled: this.login !== null,
+      enabled: this.login.value !== null,
     })
   }
 }
