@@ -49,7 +49,7 @@ export type Page<T> = {
   content: T[]
 }
 
-export type Entity<K> = {
+export interface Entity<K> {
   id: K
 }
 
