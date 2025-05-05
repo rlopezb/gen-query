@@ -1,5 +1,5 @@
 import type { $Fetch, NitroFetchOptions, NitroFetchRequest } from 'nitropack'
-import type { Ref } from 'vue'
+import { computed, type Ref } from 'vue'
 import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery } from '@tanstack/vue-query'
 import { useQueryFetch } from '../composables/useQueryFetch'
 
@@ -124,6 +124,24 @@ export class Filters {
   }
 }
 
+export class LoginQuery {
+  protected loginService: LoginService
+  public read: UseQueryReturnType<User, Error>
+
+  constructor(public login: Ref<Login | undefined>) {
+    this.login = login
+    this.loginService = new LoginService('auth')
+    const queryKey = computed(() => ['login', login.value])
+    const enabled = computed(() => login.value !== undefined)
+    this.read = useQuery({
+      queryKey,
+      queryFn: async () => await this.loginService.login(this.login.value!),
+      retry: false,
+      enabled,
+    })
+  }
+}
+
 export class LoginService {
   protected fetch: $Fetch<string, NitroFetchRequest>
 
@@ -208,21 +226,6 @@ class BaseQuery<T extends Entity<K>, K> {
   })
 }
 
-export class LoginQuery {
-  protected loginService: LoginService
-  public read: UseQueryReturnType<User, Error>
-
-  constructor(protected login: Ref<Login | null>) {
-    this.login = login
-    this.loginService = new LoginService('login')
-    this.read = useQuery({
-      queryKey: ['login', this.login],
-      queryFn: async () => await this.loginService.login(this.login.value!),
-      enabled: this.login.value !== null,
-    })
-  }
-}
-
 export class SingleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
   id: Ref<K>
   public read: UseQueryReturnType<T, ApiError>
@@ -263,7 +266,7 @@ export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     this.page = useInfiniteQuery({
       initialPageParam: { pageable: this.pageable },
       queryKey: this.queryKey,
-      queryFn: async ({ pageParam }) => this.service.page(pageParam.pageable, this.filters.value),
+      queryFn: async ({ pageParam }) => await this.service.page(pageParam.pageable, this.filters.value),
       getNextPageParam: (lastPage, _, lastPageParam) => {
         if (lastPage!.page.number === lastPage!.page.totalPages - 1) {
           return undefined

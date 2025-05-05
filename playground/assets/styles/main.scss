@@ -1,0 +1,7 @@
+$fonts: "Inter", sans-serif;
+$font-size: 14px;
+
+html, body {
+  font-family: #{$fonts};
+  font-size: #{$font-size};
+}
