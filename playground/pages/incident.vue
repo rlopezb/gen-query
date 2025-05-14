@@ -5,7 +5,7 @@ import type { Incident } from '~/types'
 
 const userStore = useUserStore()
 const id = ref('PDQ-lJUB8RzXNeUDGOq3')
-const incidentService = useSingleQuery<Incident, string>('incidents', id, userStore.user?.token)
+const incident = useSingleQuery<Incident, string>('incidents', id, userStore.user?.token)
 const onClick = async () => {
   id.value = 'INCIDENT-1'
 }
@@ -23,15 +23,15 @@ const onClick = async () => {
       />
     </div>
     <div class="p-col">
-      <div v-if="incidentService.read.isFetching.value">
+      <div v-if="incident.read.isFetching.value">
         <p>Loading...</p>
       </div>
-      <div v-else-if="incidentService.read.isError.value">
-        <p>Error: {{ incidentService.read.error.value?.message }}</p>
+      <div v-else-if="incident.read.isError.value">
+        <p>Error: {{ incident.read.error.value?.message }}</p>
       </div>
       <IncidentCard
         v-else
-        :incident="incidentService.read.data.value!"
+        :incident="incident.read.data.value!"
       />
       <Button
         label="Click me!"

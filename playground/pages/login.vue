@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia'
 import type { Login } from '../../src/module'
 import { useUserStore } from '~/stores/useUserStore'
 

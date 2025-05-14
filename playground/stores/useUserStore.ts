@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import type { User } from '../../src/module'
 
 export const useUserStore = defineStore(
