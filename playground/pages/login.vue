@@ -2,6 +2,10 @@
 import type { Login } from '../../src/module'
 import { useUserStore } from '~/stores/useUserStore'
 
+definePageMeta({
+  layout: 'login',
+})
+
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 const loginService = useLoginService()

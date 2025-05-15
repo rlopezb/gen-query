@@ -1,4 +1,5 @@
 import Nora from '@primeuix/themes/nora'
+import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   modules: [
@@ -11,6 +12,7 @@ export default defineNuxtConfig({
   css: [
     'assets/styles/main.scss',
     'primeicons/primeicons.css',
+    'primeflex/primeflex.css',
   ],
   compatibilityDate: '2025-03-28',
   genQuery: {

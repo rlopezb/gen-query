@@ -1,6 +1,6 @@
 {
   "name": "gen-query",
-  "version": "1.2.13",
+  "version": "1.2.14",
   "description": "Query with tanstack using generics",
   "repository": {
     "type": "git",
@@ -42,7 +42,16 @@
   "dependencies": {
     "@hebilicious/vue-query-nuxt": "^0.3.0",
     "@nuxt/kit": "^3.17.3",
-    "@tanstack/vue-query": "^5.76.0"
+    "@pinia/nuxt": "^0.11.0",
+    "@primeuix/themes": "^1.1.1",
+    "@primevue/core": "^4.3.4",
+    "@primevue/forms": "^4.3.4",
+    "@primevue/nuxt-module": "^4.3.4",
+    "@tanstack/vue-query": "^5.76.0",
+    "pinia-plugin-persistedstate": "^4.3.0",
+    "primeflex": "^4.0.0",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.3.4"
   },
   "devDependencies": {
     "@nuxt/devtools": "^2.4.1",
