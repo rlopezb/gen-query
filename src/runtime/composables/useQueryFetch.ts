@@ -2,7 +2,7 @@ import type { FetchOptions } from 'ofetch'
 import type { $Fetch } from 'nitropack'
 import { computed } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
-import type { ApiError } from '../utils'
+import { ApiError } from '../utils'
 
 export const useQueryFetch = <T>(options?: FetchOptions): $Fetch<T> => {
   const { baseURL } = useRuntimeConfig().public.genQuery as { baseURL: string }
@@ -19,31 +19,37 @@ export const useQueryFetch = <T>(options?: FetchOptions): $Fetch<T> => {
     headers: headers.value,
     onResponse: ({ response }) => {
       if (response.status === 200) return response._data
-      throw {
-        timestamp: response._data.timestamp,
-        status: response._data.status,
-        statusCode: response._data.statusCode,
-        message: response._data.message,
-        content: response._data.content,
-        cause: response._data.cause,
-      } as ApiError
+      throw new ApiError(
+        response._data.message,
+        response._data.type,
+        response._data.name,
+        response._data.stack,
+        response._data.statusCode,
+        response._data.status,
+        response._data.content,
+        response._data.cause)
     },
     onResponseError: ({ response }) => {
-      throw {
-        timestamp: response._data.timestamp,
-        status: response._data.status,
-        statusCode: response._data.statusCode,
-        message: response._data.message,
-        content: response._data.content,
-        cause: response._data.cause,
-      } as ApiError
+      throw new ApiError(
+        response._data.message,
+        response._data.type,
+        response._data.name,
+        response._data.stack,
+        response._data.statusCode,
+        response._data.status,
+        response._data.content,
+        response._data.cause)
     },
     onRequestError: ({ error }) => {
-      throw {
-        timestamp: new Date(),
-        message: error.message,
-        cause: error.cause,
-      } as ApiError
+      throw new ApiError(
+        error.message,
+        'error.type',
+        error.name,
+        error.stack,
+        -1,
+        'error.status',
+        {},
+        error.cause)
     },
   })
 }

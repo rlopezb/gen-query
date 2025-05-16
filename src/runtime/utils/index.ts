@@ -3,12 +3,29 @@ import type { Ref } from 'vue'
 import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery } from '@tanstack/vue-query'
 import { useQueryFetch } from '../composables/useQueryFetch'
 
-export interface ApiError extends Error {
+export class ApiError extends Error {
   timestamp: Date
+  override cause: unknown
+  override message: string
+  override name: string
+  override stack?: string
+  type: string
   statusCode: number
   status: string
   content?: object
-  cause?: object
+
+  constructor(message: string, type: string, name: string, stack: string | undefined, statusCode: number, status: string, content: object, cause: unknown) {
+    super(message, { cause: cause })
+    this.message = message
+    this.cause = cause
+    this.timestamp = new Date()
+    this.type = type
+    this.name = name
+    this.stack = stack
+    this.statusCode = statusCode
+    this.status = status
+    this.content = content
+  }
 }
 export type Login = {
   username: string
@@ -124,7 +141,7 @@ export class Filters {
 }
 
 export class LoginService {
-  protected fetch: $Fetch<string, NitroFetchRequest>
+  protected fetch: $Fetch<string>
 
   constructor(protected resource: string) {
     this.fetch = useQueryFetch<string>()
@@ -137,7 +154,7 @@ export class LoginService {
 }
 
 export class Service<T, K> {
-  protected fetch: $Fetch<T, NitroFetchRequest>
+  protected fetch: $Fetch<T>
 
   constructor(protected resource: string, token?: string) {
     this.fetch = useQueryFetch<T>(token ? { headers: { Authorization: `Bearer ${token}` } } : undefined)
