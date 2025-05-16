@@ -1,13 +1,12 @@
 import type { $Fetch, NitroFetchOptions, NitroFetchRequest } from 'nitropack'
-import { computed, type Ref } from 'vue'
+import type { Ref } from 'vue'
 import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery } from '@tanstack/vue-query'
 import { useQueryFetch } from '../composables/useQueryFetch'
 
-export type ApiError = {
+export interface ApiError extends Error {
   timestamp: Date
   statusCode: number
   status: string
-  message: string
   content?: object
   cause?: object
 }
@@ -121,24 +120,6 @@ export class Filters {
       }
     }
     return params.join('&')
-  }
-}
-
-export class LoginQuery {
-  protected loginService: LoginService
-  public read: UseQueryReturnType<User, Error>
-
-  constructor(public login: Ref<Login | undefined>) {
-    this.login = login
-    this.loginService = new LoginService('auth')
-    const queryKey = computed(() => ['login', login.value])
-    const enabled = computed(() => login.value !== undefined)
-    this.read = useQuery({
-      queryKey,
-      queryFn: async () => await this.loginService.login(this.login.value!),
-      retry: false,
-      enabled,
-    })
   }
 }
 
