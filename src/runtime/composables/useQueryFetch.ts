@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
 import type { ApiError } from '../utils'
 
-export const useQueryFetch = <T> (options?: FetchOptions): $Fetch<T> => {
+export const useQueryFetch = <T>(options?: FetchOptions): $Fetch<T> => {
   const { baseURL } = useRuntimeConfig().public.genQuery as { baseURL: string }
   const headers = computed(() => {
     const headers: Headers = new Headers(options?.headers)
@@ -26,6 +26,23 @@ export const useQueryFetch = <T> (options?: FetchOptions): $Fetch<T> => {
         message: response._data.message,
         content: response._data.content,
         cause: response._data.cause,
+      } as ApiError
+    },
+    onResponseError: ({ response }) => {
+      throw {
+        timestamp: response._data.timestamp,
+        status: response._data.status,
+        statusCode: response._data.statusCode,
+        message: response._data.message,
+        content: response._data.content,
+        cause: response._data.cause,
+      } as ApiError
+    },
+    onRequestError: ({ error }) => {
+      throw {
+        timestamp: new Date(),
+        message: error.message,
+        cause: error.cause,
       } as ApiError
     },
   })
