@@ -21,7 +21,7 @@ export const useQueryFetch = <T>(options?: FetchOptions): $Fetch<T> => {
       if (response.status === 200) return response._data
       throw new ApiError(
         response._data.message,
-        response._data.type,
+        response._data.status,
         response._data.name,
         response._data.stack,
         response._data.statusCode,
