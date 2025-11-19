@@ -11,7 +11,9 @@ export default defineNuxtModule<ModuleOptions>({
     configKey: 'genQuery',
   },
   // Default configuration options of the Nuxt module
-  defaults: {},
+  defaults: {
+    baseURL: process.env.NUXT_PUBLIC_API_BASE_URL || '',
+  },
   async setup(options, nuxt) {
     nuxt.options.runtimeConfig.public.genQuery = {
       baseURL: options.baseURL,
@@ -22,4 +24,8 @@ export default defineNuxtModule<ModuleOptions>({
   },
 })
 
-export type { Login, User, Entity } from './runtime/types'
+export type { Login, User, Entity, Page, FilterItem, Constraint, Sort } from './runtime/types'
+export type { Pageable, Filters, ApiError } from './runtime/models'
+export { Service, LoginService } from './runtime/services'
+export { SingleQuery, MultipleQuery, PaginatedQuery, BaseQuery } from './runtime/queries'
+

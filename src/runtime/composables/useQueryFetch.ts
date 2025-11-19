@@ -12,12 +12,42 @@ export interface QueryFetchOptions extends FetchOptions {
 }
 
 /**
+ * Helper function to create ApiError instances.
+ * Reduces code duplication across error handlers.
+ */
+const createApiError = (response?: any, error?: Error): ApiError => {
+  return new ApiError(
+    response?._data?.message || error?.message || 'Unknown Error',
+    response?._data?.type || 'error',
+    response?._data?.name || error?.name || 'Error',
+    response?._data?.stack || error?.stack,
+    response?._data?.statusCode || response?.status || -1,
+    response?._data?.status || 'error',
+    response?._data?.content || {},
+    response?._data?.cause || error?.cause,
+  )
+}
+
+/**
  * Composable for creating a fetcher with default configuration and error handling.
  * @param options Fetch options including token.
  * @returns A configured $Fetch instance.
  */
 export const useQueryFetch = <T>(options?: QueryFetchOptions): $Fetch<T> => {
-  const { baseURL } = useRuntimeConfig().public.genQuery as { baseURL: string }
+  const config = useRuntimeConfig().public.genQuery as { baseURL?: string }
+
+  if (!config?.baseURL) {
+    throw new Error(
+      'gen-query: baseURL is not configured. Please add it to your nuxt.config.ts:\n' +
+      'export default defineNuxtConfig({\n' +
+      '  genQuery: {\n' +
+      '    baseURL: "http://your-api-url"\n' +
+      '  }\n' +
+      '})'
+    )
+  }
+
+  const { baseURL } = config
 
   const headers = computed(() => {
     const headers: Headers = new Headers(options?.headers)
@@ -40,41 +70,15 @@ export const useQueryFetch = <T>(options?: QueryFetchOptions): $Fetch<T> => {
       }
     },
     onResponse: ({ response }) => {
-      if (response.status === 200) return response._data
-      throw new ApiError(
-        response._data?.message || 'Unknown Error',
-        response._data?.type || 'error',
-        response._data?.name || 'Error',
-        response._data?.stack,
-        response._data?.statusCode || response.status,
-        response._data?.status || 'error',
-        response._data?.content || {},
-        response._data?.cause,
-      )
+      // Accept all 2xx status codes (200-299)
+      if (response.ok) return response._data
+      throw createApiError(response)
     },
     onResponseError: ({ response }) => {
-      throw new ApiError(
-        response._data?.message || 'Unknown Error',
-        response._data?.type || 'error',
-        response._data?.name || 'Error',
-        response._data?.stack,
-        response._data?.statusCode || response.status,
-        response._data?.status || 'error',
-        response._data?.content || {},
-        response._data?.cause,
-      )
+      throw createApiError(response)
     },
     onRequestError: ({ error }) => {
-      throw new ApiError(
-        error.message,
-        'error.type',
-        error.name,
-        error.stack,
-        -1,
-        'error.status',
-        {},
-        error.cause,
-      )
+      throw createApiError(undefined, error)
     },
   })
 }

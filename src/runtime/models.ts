@@ -58,6 +58,11 @@ export const isIsoDateString = (value: unknown): boolean =>
 export const handleDates = <T>(body: T): T => {
   if (!body || typeof body !== 'object') return body
 
+  // Handle arrays by processing each element
+  if (Array.isArray(body)) {
+    return body.map(item => handleDates(item)) as T
+  }
+
   for (const key of Object.keys(body)) {
     const value = (body as Record<string, unknown>)[key]
     if (typeof value === 'string' && isIsoDateString(value)) {

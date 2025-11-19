@@ -1,7 +1,7 @@
 import type { Ref, MaybeRefOrGetter } from 'vue'
 import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery } from '@tanstack/vue-query'
 import { Service } from './services'
-import { Filters, Pageable, type ApiError } from './models'
+import { type Filters, Pageable, type ApiError } from './models'
 import type { Entity, Page } from './types'
 
 /**
