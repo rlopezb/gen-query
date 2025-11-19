@@ -22,4 +22,4 @@ export default defineNuxtModule<ModuleOptions>({
   },
 })
 
-export type { Login, User, Entity } from './runtime/utils'
+export type { Login, User, Entity } from './runtime/types'
