@@ -1,5 +1,5 @@
 import { LoginService } from '../services'
 
-export const useLoginService = () => {
-  return new LoginService('auth')
+export const useLoginService = (resource: string = 'auth') => {
+  return new LoginService(resource)
 }
