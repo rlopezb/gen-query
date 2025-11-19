@@ -4,10 +4,18 @@ import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
 import { ApiError } from '../models'
 
+/**
+ * Options for the query fetcher.
+ */
 export interface QueryFetchOptions extends FetchOptions {
   token?: MaybeRefOrGetter<string | undefined>
 }
 
+/**
+ * Composable for creating a fetcher with default configuration and error handling.
+ * @param options Fetch options including token.
+ * @returns A configured $Fetch instance.
+ */
 export const useQueryFetch = <T>(options?: QueryFetchOptions): $Fetch<T> => {
   const { baseURL } = useRuntimeConfig().public.genQuery as { baseURL: string }
 

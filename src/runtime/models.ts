@@ -1,5 +1,8 @@
 import type { FilterItem, Sort } from './types'
 
+/**
+ * Custom error class for API errors.
+ */
 export class ApiError extends Error {
   timestamp: Date
   override cause: unknown
@@ -25,6 +28,11 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Formats a date to 'YYYY-MM-DD' string.
+ * @param date The date to format.
+ * @returns The formatted date string.
+ */
 export const formatDate = (date: string | Date): string => {
   if (date instanceof Date) {
     return date.toLocaleDateString('en-CA')
@@ -33,9 +41,20 @@ export const formatDate = (date: string | Date): string => {
 }
 
 const isoDateFormat = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+(?:[+-][0-2]\d:[0-5]\d|Z)/
+
+/**
+ * Checks if a value is an ISO date string.
+ * @param value The value to check.
+ * @returns True if the value is an ISO date string, false otherwise.
+ */
 export const isIsoDateString = (value: unknown): boolean =>
   typeof value === 'string' && isoDateFormat.test(value)
 
+/**
+ * Recursively converts ISO date strings in an object to Date objects.
+ * @param body The object to process.
+ * @returns The object with Date objects.
+ */
 export const handleDates = <T>(body: T): T => {
   if (!body || typeof body !== 'object') return body
 
@@ -51,6 +70,9 @@ export const handleDates = <T>(body: T): T => {
   return body
 }
 
+/**
+ * Class representing pagination configuration.
+ */
 export class Pageable {
   page: number
   size: number
@@ -62,6 +84,10 @@ export class Pageable {
     this.sort = sort
   }
 
+  /**
+   * Converts pagination configuration to query parameters string.
+   * @returns Query parameters string.
+   */
   public toQueryParams = (): string => [
     `size=${encodeURIComponent(this.size)}`,
     `page=${encodeURIComponent(this.page)}`,
@@ -69,9 +95,16 @@ export class Pageable {
   ].join('&')
 }
 
+/**
+ * Class representing filter configuration.
+ */
 export class Filters {
   [key: string]: FilterItem | (() => string);
 
+  /**
+   * Converts filters to query parameters string.
+   * @returns Query parameters string.
+   */
   public toQueryParams = (): string => {
     const params: string[] = []
     for (const [field, filterItem] of Object.entries(this)) {

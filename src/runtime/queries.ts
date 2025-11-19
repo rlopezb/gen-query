@@ -4,6 +4,10 @@ import { Service } from './services'
 import { Filters, Pageable, type ApiError } from './models'
 import type { Entity } from './types'
 
+/**
+ * Base query class providing common functionality for all queries.
+ * Handles the service instance, query client, and common mutations.
+ */
 export class BaseQuery<T extends Entity<K>, K> {
     protected resource: string
     protected queryClient: QueryClient
@@ -18,22 +22,86 @@ export class BaseQuery<T extends Entity<K>, K> {
 
     protected invalidate = () => this.queryClient.invalidateQueries({ queryKey: this.queryKey })
 
+    /**
+     * Mutation to create a new entity.
+     * Performs optimistic updates to the cache.
+     */
     public create = useMutation({
         mutationFn: (entity: T) => this.service.create(entity),
-        onSuccess: this.invalidate,
+        onMutate: async (newEntity) => {
+            await this.queryClient.cancelQueries({ queryKey: this.queryKey })
+            const previousData = this.queryClient.getQueryData(this.queryKey!)
+            this.queryClient.setQueryData(this.queryKey!, (old: any) => {
+                if (Array.isArray(old)) return [...old, newEntity]
+                // Handle paginated data structure if necessary, or other shapes
+                return old
+            })
+            return { previousData }
+        },
+        onError: (_err, _newEntity, context) => {
+            this.queryClient.setQueryData(this.queryKey!, context?.previousData)
+        },
+        onSettled: () => {
+            this.invalidate()
+        },
     })
 
+    /**
+     * Mutation to update an existing entity.
+     * Performs optimistic updates to the cache.
+     */
     public update = useMutation({
         mutationFn: (entity: T) => this.service.update(entity),
-        onSuccess: this.invalidate,
+        onMutate: async (newEntity) => {
+            await this.queryClient.cancelQueries({ queryKey: this.queryKey })
+            const previousData = this.queryClient.getQueryData(this.queryKey!)
+            this.queryClient.setQueryData(this.queryKey!, (old: any) => {
+                if (Array.isArray(old)) {
+                    return old.map((item: T) => item.id === newEntity.id ? newEntity : item)
+                }
+                // Handle single entity update if queryKey points to one
+                if (old && (old as T).id === newEntity.id) return newEntity
+                return old
+            })
+            return { previousData }
+        },
+        onError: (_err, _newEntity, context) => {
+            this.queryClient.setQueryData(this.queryKey!, context?.previousData)
+        },
+        onSettled: () => {
+            this.invalidate()
+        },
     })
 
+    /**
+     * Mutation to delete an entity.
+     * Performs optimistic updates to the cache.
+     */
     public del = useMutation({
         mutationFn: (entity: T) => this.service.delete(entity),
-        onSuccess: this.invalidate,
+        onMutate: async (deletedEntity) => {
+            await this.queryClient.cancelQueries({ queryKey: this.queryKey })
+            const previousData = this.queryClient.getQueryData(this.queryKey!)
+            this.queryClient.setQueryData(this.queryKey!, (old: any) => {
+                if (Array.isArray(old)) {
+                    return old.filter((item: T) => item.id !== deletedEntity.id)
+                }
+                return old
+            })
+            return { previousData }
+        },
+        onError: (_err, _newEntity, context) => {
+            this.queryClient.setQueryData(this.queryKey!, context?.previousData)
+        },
+        onSettled: () => {
+            this.invalidate()
+        },
     })
 }
 
+/**
+ * Query class for fetching a single entity by ID.
+ */
 export class SingleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     id: Ref<K>
     public read: UseQueryReturnType<T, ApiError>
@@ -49,6 +117,9 @@ export class SingleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     }
 }
 
+/**
+ * Query class for fetching a list of entities.
+ */
 export class MultipleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     public list: UseQueryReturnType<T[], ApiError>
     constructor(resource: string, token?: MaybeRefOrGetter<string | undefined>) {
@@ -62,6 +133,9 @@ export class MultipleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     }
 }
 
+/**
+ * Query class for fetching paginated entities with filters.
+ */
 export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     pageable: Pageable
     filters: Ref<Filters>
