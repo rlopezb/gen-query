@@ -2,7 +2,7 @@ import type { Ref, MaybeRefOrGetter } from 'vue'
 import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery } from '@tanstack/vue-query'
 import { Service } from './services'
 import { Filters, Pageable, type ApiError } from './models'
-import type { Entity } from './types'
+import type { Entity, Page } from './types'
 
 /**
  * Base query class providing common functionality for all queries.
@@ -28,17 +28,17 @@ export class BaseQuery<T extends Entity<K>, K> {
      */
     public create = useMutation({
         mutationFn: (entity: T) => this.service.create(entity),
-        onMutate: async (newEntity) => {
+        onMutate: async (newEntity: T) => {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
             const previousData = this.queryClient.getQueryData(this.queryKey!)
-            this.queryClient.setQueryData(this.queryKey!, (old: any) => {
+            this.queryClient.setQueryData(this.queryKey!, (old: unknown) => {
                 if (Array.isArray(old)) return [...old, newEntity]
                 // Handle paginated data structure if necessary, or other shapes
                 return old
             })
             return { previousData }
         },
-        onError: (_err, _newEntity, context) => {
+        onError: (_err: ApiError, _newEntity: T, context: { previousData: unknown } | undefined) => {
             this.queryClient.setQueryData(this.queryKey!, context?.previousData)
         },
         onSettled: () => {
@@ -52,10 +52,10 @@ export class BaseQuery<T extends Entity<K>, K> {
      */
     public update = useMutation({
         mutationFn: (entity: T) => this.service.update(entity),
-        onMutate: async (newEntity) => {
+        onMutate: async (newEntity: T) => {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
             const previousData = this.queryClient.getQueryData(this.queryKey!)
-            this.queryClient.setQueryData(this.queryKey!, (old: any) => {
+            this.queryClient.setQueryData(this.queryKey!, (old: unknown) => {
                 if (Array.isArray(old)) {
                     return old.map((item: T) => item.id === newEntity.id ? newEntity : item)
                 }
@@ -65,7 +65,7 @@ export class BaseQuery<T extends Entity<K>, K> {
             })
             return { previousData }
         },
-        onError: (_err, _newEntity, context) => {
+        onError: (_err: ApiError, _newEntity: T, context: { previousData: unknown } | undefined) => {
             this.queryClient.setQueryData(this.queryKey!, context?.previousData)
         },
         onSettled: () => {
@@ -79,10 +79,10 @@ export class BaseQuery<T extends Entity<K>, K> {
      */
     public del = useMutation({
         mutationFn: (entity: T) => this.service.delete(entity),
-        onMutate: async (deletedEntity) => {
+        onMutate: async (deletedEntity: T) => {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
             const previousData = this.queryClient.getQueryData(this.queryKey!)
-            this.queryClient.setQueryData(this.queryKey!, (old: any) => {
+            this.queryClient.setQueryData(this.queryKey!, (old: unknown) => {
                 if (Array.isArray(old)) {
                     return old.filter((item: T) => item.id !== deletedEntity.id)
                 }
@@ -90,7 +90,7 @@ export class BaseQuery<T extends Entity<K>, K> {
             })
             return { previousData }
         },
-        onError: (_err, _newEntity, context) => {
+        onError: (_err: ApiError, _newEntity: T, context: { previousData: unknown } | undefined) => {
             this.queryClient.setQueryData(this.queryKey!, context?.previousData)
         },
         onSettled: () => {
@@ -148,8 +148,8 @@ export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
         this.page = useInfiniteQuery({
             initialPageParam: { pageable: this.pageable },
             queryKey: this.queryKey,
-            queryFn: async ({ pageParam }) => await this.service.page(pageParam.pageable, this.filters.value),
-            getNextPageParam: (lastPage, _, lastPageParam) => {
+            queryFn: async ({ pageParam }: { pageParam: { pageable: Pageable } }) => await this.service.page(pageParam.pageable, this.filters.value),
+            getNextPageParam: (lastPage: Page<T>, _: Page<T>[], lastPageParam: { pageable: Pageable }) => {
                 if (lastPage!.page.number === lastPage!.page.totalPages - 1) {
                     return undefined
                 }
@@ -161,7 +161,7 @@ export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
                     return { pageable: nextPageable }
                 }
             },
-            getPreviousPageParam: (firstPage, _, firstPageParam) => {
+            getPreviousPageParam: (firstPage: Page<T>, _: Page<T>[], firstPageParam: { pageable: Pageable }) => {
                 if (firstPage!.page.number === 0) {
                     return undefined
                 }
