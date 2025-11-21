@@ -3,7 +3,11 @@ import type { $Fetch } from 'nitropack'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { ApiError } from '../models'
 
-// useRuntimeConfig is auto-imported by Nuxt
+import { useRuntimeConfig } from '#app'
+
+// useRuntimeConfig is auto-imported by Nuxt, but in some module contexts it might need explicit import or it's a type issue.
+// However, for a module runtime, it usually needs to be imported from '#app' if auto-imports aren't working as expected in the dev environment or specific file.
+
 
 /**
  * Options for the query fetcher.
