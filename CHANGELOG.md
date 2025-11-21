@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.5.0
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.4.0...v1.5.0)
+
+### 🚀 Enhancements
+
+- Document new `useSingleQuery`, `useMultipleQuery`, `usePaginatedQuery`, and `useLoginService` composables with usage examples and API reference. ([dc8a896](https://github.com/rlopezb/gen-query/commit/dc8a896))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.4.0
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.3.0...v1.4.0)
