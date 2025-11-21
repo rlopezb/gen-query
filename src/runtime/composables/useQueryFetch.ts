@@ -2,7 +2,8 @@ import type { FetchOptions } from 'ofetch'
 import type { $Fetch } from 'nitropack'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { ApiError } from '../models'
-import { useRuntimeConfig } from '#imports'
+
+// useRuntimeConfig is auto-imported by Nuxt
 
 /**
  * Options for the query fetcher.
@@ -15,16 +16,17 @@ export interface QueryFetchOptions extends FetchOptions {
  * Helper function to create ApiError instances.
  * Reduces code duplication across error handlers.
  */
-const createApiError = (response?: any, error?: Error): ApiError => {
+const createApiError = (response?: unknown, error?: Error): ApiError => {
+  const res = response as { _data?: Record<string, unknown>, status?: number }
   return new ApiError(
-    response?._data?.message || error?.message || 'Unknown Error',
-    response?._data?.type || 'error',
-    response?._data?.name || error?.name || 'Error',
-    response?._data?.stack || error?.stack,
-    response?._data?.statusCode || response?.status || -1,
-    response?._data?.status || 'error',
-    response?._data?.content || {},
-    response?._data?.cause || error?.cause,
+    (res?._data?.message as string) || error?.message || 'Unknown Error',
+    (res?._data?.type as string) || 'error',
+    (res?._data?.name as string) || error?.name || 'Error',
+    (res?._data?.stack as string) || error?.stack,
+    (res?._data?.statusCode as number) || res?.status || -1,
+    (res?._data?.status as string) || 'error',
+    (res?._data?.content as object) || {},
+    res?._data?.cause || error?.cause,
   )
 }
 
@@ -38,12 +40,12 @@ export const useQueryFetch = <T>(options?: QueryFetchOptions): $Fetch<T> => {
 
   if (!config?.baseURL) {
     throw new Error(
-      'gen-query: baseURL is not configured. Please add it to your nuxt.config.ts:\n' +
-      'export default defineNuxtConfig({\n' +
-      '  genQuery: {\n' +
-      '    baseURL: "http://your-api-url"\n' +
-      '  }\n' +
-      '})'
+      'gen-query: baseURL is not configured. Please add it to your nuxt.config.ts:\n'
+      + 'export default defineNuxtConfig({\n'
+      + '  genQuery: {\n'
+      + '    baseURL: "http://your-api-url"\n'
+      + '  }\n'
+      + '})',
     )
   }
 

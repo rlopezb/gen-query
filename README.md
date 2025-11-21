@@ -366,8 +366,383 @@ interface MyEntity extends Entity<string> {
   name: string
 }
 
-const query = new SingleQuery<MyEntity, string>('my-resource', ref('123'))
+const query = new PaginatedQuery<MyEntity, string>('my-resource', ref('123'))
 // query.read.data is typed as Ref<MyEntity | undefined>
+```
+
+## 🔌 Backend API Endpoints
+
+This section documents the HTTP endpoints that gen-query expects from your backend API. Use this as a guide when designing your REST API.
+
+> 📖 **For complete backend API specification with detailed examples, see [BACKEND_API.md](BACKEND_API.md)**
+
+### Base Configuration
+
+All endpoints are relative to the `baseURL` configured in your `nuxt.config.ts`:
+
+```typescript
+genQuery: {
+  baseURL: 'https://api.example.com' // Your API base URL
+}
+```
+
+### Authentication Endpoints
+
+#### Login
+
+**Endpoint:** `POST {baseURL}/{resource}/login`
+
+**Request Body:**
+```json
+{
+  "username": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+```json
+{
+  "username": "user@example.com",
+  "fullName": "John Doe",
+  "email": "user@example.com",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Example:**
+```typescript
+const loginService = new LoginService('auth')
+// Calls: POST https://api.example.com/auth/login
+```
+
+---
+
+### CRUD Endpoints
+
+For a resource like `products`, the following endpoints are expected:
+
+#### List All Entities
+
+**Endpoint:** `GET {baseURL}/{resource}`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Product 1",
+    "price": 99.99,
+    "createdAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Product 2",
+    "price": 149.99,
+    "createdAt": "2024-01-16T14:20:00Z"
+  }
+]
+```
+
+**Example:**
+```typescript
+const service = new Service<Product, number>('products')
+service.list()
+// Calls: GET https://api.example.com/products
+```
+
+---
+
+#### Read Single Entity
+
+**Endpoint:** `GET {baseURL}/{resource}/{id}`
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Product 1",
+  "price": 99.99,
+  "description": "Product description",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+**Example:**
+```typescript
+const service = new Service<Product, number>('products')
+service.read(1)
+// Calls: GET https://api.example.com/products/1
+```
+
+---
+
+#### Create Entity
+
+**Endpoint:** `POST {baseURL}/{resource}`
+
+**Request Body:**
+```json
+{
+  "name": "New Product",
+  "price": 199.99,
+  "description": "New product description"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 3,
+  "name": "New Product",
+  "price": 199.99,
+  "description": "New product description",
+  "createdAt": "2024-01-17T09:15:00Z"
+}
+```
+
+**Example:**
+```typescript
+const service = new Service<Product, number>('products')
+service.create({ name: 'New Product', price: 199.99 })
+// Calls: POST https://api.example.com/products
+```
+
+---
+
+#### Update Entity
+
+**Endpoint:** `PUT {baseURL}/{resource}`
+
+**Request Body:**
+```json
+{
+  "id": 1,
+  "name": "Updated Product",
+  "price": 109.99,
+  "description": "Updated description"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Updated Product",
+  "price": 109.99,
+  "description": "Updated description",
+  "updatedAt": "2024-01-17T10:00:00Z"
+}
+```
+
+**Example:**
+```typescript
+const service = new Service<Product, number>('products')
+service.update({ id: 1, name: 'Updated Product', price: 109.99 })
+// Calls: PUT https://api.example.com/products
+```
+
+---
+
+#### Delete Entity
+
+**Endpoint:** `DELETE {baseURL}/{resource}`
+
+**Request Body:**
+```json
+{
+  "id": 1
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Deleted Product",
+  "deleted": true
+}
+```
+
+**Example:**
+```typescript
+const service = new Service<Product, number>('products')
+service.delete({ id: 1 })
+// Calls: DELETE https://api.example.com/products
+```
+
+---
+
+### Pagination Endpoint
+
+#### Paginated List with Filters
+
+**Endpoint:** `GET {baseURL}/{resource}/page?{queryParams}`
+
+**Query Parameters:**
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `size` | number | Number of items per page | `size=20` |
+| `page` | number | Page number (0-indexed) | `page=0` |
+| `sort` | string | Sort field and direction | `sort=name,asc` |
+| `filter` | string | Filter expression | `filter=price‚gte‚100` |
+
+**URL Examples:**
+
+```
+# Basic pagination
+GET /products/page?size=20&page=0
+
+# With sorting
+GET /products/page?size=20&page=0&sort=name,asc
+
+# With multiple sorts
+GET /products/page?size=20&page=0&sort=name,asc&sort=price,desc
+
+# With single filter
+GET /products/page?size=20&page=0&filter=price‚gte‚100
+
+# With multiple filters (AND)
+GET /products/page?size=20&page=0&filter=name:contains:laptop&price:gte:100
+
+# With multiple filters (OR)
+GET /products/page?size=20&page=0&filter=category:eq:electronics|category:eq:computers
+```
+
+**Response:**
+```json
+{
+  "page": {
+    "number": 0,
+    "size": 20,
+    "totalElements": 150,
+    "totalPages": 8
+  },
+  "content": [
+    {
+      "id": 1,
+      "name": "Product 1",
+      "price": 99.99,
+      "category": "electronics",
+      "createdAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Product 2",
+      "price": 149.99,
+      "category": "electronics",
+      "createdAt": "2024-01-16T14:20:00Z"
+    }
+  ]
+}
+```
+
+**Example:**
+```typescript
+const pageable = new Pageable(0, 20, [{ property: 'name', direction: 'asc' }])
+const filters = ref(new Filters())
+filters.value.price = {
+  operator: 'and',
+  constraints: [{ matchMode: 'gte', value: 100 }]
+}
+
+const service = new Service<Product, number>('products')
+service.page(pageable, filters.value)
+// Calls: GET https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚100
+```
+
+---
+
+### Filter Match Modes
+
+The following match modes are supported in filters:
+
+| Match Mode | Description | Example Filter | SQL Equivalent |
+|------------|-------------|----------------|----------------|
+| `eq` | Equals | `status‚eq‚active` | `status = 'active'` |
+| `ne` | Not equals | `status‚ne‚deleted` | `status != 'deleted'` |
+| `lt` | Less than | `price‚lt‚100` | `price < 100` |
+| `lte` | Less than or equal | `price‚lte‚100` | `price <= 100` |
+| `gt` | Greater than | `price‚gt‚50` | `price > 50` |
+| `gte` | Greater than or equal | `price‚gte‚50` | `price >= 50` |
+| `contains` | Contains substring | `name‚contains‚laptop` | `name LIKE '%laptop%'` |
+| `startsWith` | Starts with | `name‚startsWith‚Pro` | `name LIKE 'Pro%'` |
+| `endsWith` | Ends with | `name‚endsWith‚Pro` | `name LIKE '%Pro'` |
+| `in` | In list | `status‚in‚active,pending` | `status IN ('active','pending')` |
+
+---
+
+### Request Headers
+
+All requests include the following headers:
+
+```
+Accept: application/json
+Content-Type: application/json
+```
+
+For authenticated requests (when token is provided):
+
+```
+Authorization: Bearer {token}
+```
+
+---
+
+### Error Responses
+
+The backend should return errors in the following format:
+
+```json
+{
+  "message": "Error description",
+  "type": "error",
+  "name": "ValidationError",
+  "statusCode": 400,
+  "status": "error",
+  "content": {
+    "field": "price",
+    "constraint": "must be positive"
+  }
+}
+```
+
+**Common Status Codes:**
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not Found
+- `422` - Unprocessable Entity
+- `500` - Internal Server Error
+
+---
+
+### Date Handling
+
+- **Request:** Send dates as ISO 8601 strings (`2024-01-15T10:30:00Z`)
+- **Response:** Return dates as ISO 8601 strings
+- **Auto-conversion:** gen-query automatically converts ISO date strings to JavaScript `Date` objects
+
+---
+
+### Complete Example: Products API
+
+```typescript
+// Frontend configuration
+genQuery: {
+  baseURL: 'https://api.example.com'
+}
+
+// Backend endpoints required:
+GET    /products              // List all
+GET    /products/1            // Read single
+POST   /products              // Create
+PUT    /products              // Update
+DELETE /products              // Delete
+GET    /products/page?...     // Paginated list
 ```
 
 ## 🤝 Contributing

@@ -32,4 +32,3 @@ export type { Login, User, Entity, Page, FilterItem, Constraint, Sort } from './
 export type { Pageable, Filters, ApiError } from './runtime/models'
 export { Service, LoginService } from './runtime/services'
 export { SingleQuery, MultipleQuery, PaginatedQuery, BaseQuery } from './runtime/queries'
-
