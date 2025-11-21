@@ -67,7 +67,145 @@ export interface Product extends Entity<number> {
 }
 ```
 
-### 3. Use Query Classes
+### 3. Use Composables (Recommended)
+
+Gen-query provides composables that simplify usage and follow Vue best practices.
+
+#### Single Entity with `useSingleQuery`
+
+```vue
+<script setup lang="ts">
+import { useSingleQuery } from 'gen-query'
+import type { Product } from '~/types/product'
+
+const productId = ref(1)
+const productQuery = useSingleQuery<Product, number>('products', productId)
+
+// Access the query result
+const { data, isLoading, error } = productQuery.read
+
+// Update the product
+const updateProduct = async (product: Product) => {
+  await productQuery.update.mutateAsync(product)
+}
+</script>
+
+<template>
+  <div v-if="isLoading">Loading...</div>
+  <div v-else-if="error">Error: {{ error.message }}</div>
+  <div v-else-if="data">
+    <h1>{{ data.name }}</h1>
+    <p>{{ data.description }}</p>
+    <p>Price: ${{ data.price }}</p>
+  </div>
+</template>
+```
+
+#### Multiple Entities with `useMultipleQuery`
+
+```vue
+<script setup lang="ts">
+import { useMultipleQuery } from 'gen-query'
+import type { Product } from '~/types/product'
+
+const productsQuery = useMultipleQuery<Product, number>('products')
+const { data: products, isLoading } = productsQuery.list
+
+// Create a new product
+const createProduct = async (product: Omit<Product, 'id'>) => {
+  await productsQuery.create.mutateAsync(product as Product)
+}
+
+// Delete a product
+const deleteProduct = async (product: Product) => {
+  await productsQuery.del.mutateAsync(product)
+}
+</script>
+
+<template>
+  <div v-if="isLoading">Loading products...</div>
+  <ul v-else>
+    <li v-for="product in products" :key="product.id">
+      {{ product.name }} - ${{ product.price }}
+      <button @click="deleteProduct(product)">Delete</button>
+    </li>
+  </ul>
+</template>
+```
+
+#### Paginated Query with `usePaginatedQuery`
+
+```vue
+<script setup lang="ts">
+import { usePaginatedQuery, Pageable, Filters } from 'gen-query'
+import type { Product } from '~/types/product'
+
+const pageable = new Pageable(0, 20, [{ property: 'name', direction: 'asc' }])
+const filters = ref(new Filters())
+
+// Add filters
+filters.value.price = {
+  operator: 'and',
+  constraints: [{ matchMode: 'gte', value: 50 }]
+}
+
+const productsQuery = usePaginatedQuery<Product, number>(
+  'products',
+  pageable,
+  filters
+)
+
+const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = productsQuery.page
+</script>
+
+<template>
+  <div v-for="page in data?.pages" :key="page.page.number">
+    <div v-for="product in page.content" :key="product.id">
+      {{ product.name }} - ${{ product.price }}
+    </div>
+  </div>
+  <button 
+    v-if="hasNextPage" 
+    @click="fetchNextPage()" 
+    :disabled="isFetchingNextPage"
+  >
+    Load More
+  </button>
+</template>
+```
+
+#### Authentication with `useLoginService`
+
+```vue
+<script setup lang="ts">
+import { useLoginService } from 'gen-query'
+
+const loginService = useLoginService() // defaults to 'auth' resource
+const username = ref('')
+const password = ref('')
+const token = ref<string>()
+
+const handleLogin = async () => {
+  try {
+    const user = await loginService.login({ username: username.value, password: password.value })
+    token.value = user.token
+    // Store token for authenticated requests
+  } catch (error) {
+    console.error('Login failed:', error)
+  }
+}
+</script>
+
+<template>
+  <form @submit.prevent="handleLogin">
+    <input v-model="username" placeholder="Username" />
+    <input v-model="password" type="password" placeholder="Password" />
+    <button type="submit">Login</button>
+  </form>
+</template>
+```
+
+### 4. Use Query Classes (Alternative)
 
 #### Single Entity Query
 
@@ -188,7 +326,133 @@ const loadMore = () => {
 </template>
 ```
 
-## � API Reference
+##  API Reference
+
+### Composables
+
+#### `useSingleQuery<T, K>`
+
+Creates a query for fetching and managing a single entity by ID.
+
+**Signature:**
+```typescript
+useSingleQuery<T extends Entity<K>, K>(
+  resource: string,
+  id: Ref<K>,
+  token?: MaybeRefOrGetter<string | undefined>
+): SingleQuery<T, K>
+```
+
+**Parameters:**
+- `resource` - The API resource endpoint (e.g., 'products')
+- `id` - Reactive reference to the entity ID
+- `token` - Optional authentication token
+
+**Returns:** `SingleQuery<T, K>` instance with:
+- `read` - Query for fetching the entity
+- `create` - Mutation for creating entities
+- `update` - Mutation for updating the entity
+- `del` - Mutation for deleting the entity
+
+**Example:**
+```typescript
+const productId = ref(1)
+const query = useSingleQuery<Product, number>('products', productId)
+const { data, isLoading } = query.read
+```
+
+---
+
+#### `useMultipleQuery<T, K>`
+
+Creates a query for fetching and managing a list of entities.
+
+**Signature:**
+```typescript
+useMultipleQuery<T extends Entity<K>, K>(
+  resource: string,
+  token?: MaybeRefOrGetter<string | undefined>
+): MultipleQuery<T, K>
+```
+
+**Parameters:**
+- `resource` - The API resource endpoint (e.g., 'products')
+- `token` - Optional authentication token
+
+**Returns:** `MultipleQuery<T, K>` instance with:
+- `list` - Query for fetching all entities
+- `create` - Mutation for creating entities
+- `update` - Mutation for updating entities
+- `del` - Mutation for deleting entities
+
+**Example:**
+```typescript
+const query = useMultipleQuery<Product, number>('products')
+const { data: products } = query.list
+await query.create.mutateAsync(newProduct)
+```
+
+---
+
+#### `usePaginatedQuery<T, K>`
+
+Creates a query for fetching paginated entities with filtering and sorting.
+
+**Signature:**
+```typescript
+usePaginatedQuery<T extends Entity<K>, K>(
+  resource: string,
+  pageable: Pageable,
+  filters: Ref<Filters>,
+  token?: MaybeRefOrGetter<string | undefined>
+): PaginatedQuery<T, K>
+```
+
+**Parameters:**
+- `resource` - The API resource endpoint (e.g., 'products')
+- `pageable` - Pagination configuration (page, size, sort)
+- `filters` - Reactive filters reference
+- `token` - Optional authentication token
+
+**Returns:** `PaginatedQuery<T, K>` instance with:
+- `page` - Infinite query for paginated data
+- `create` - Mutation for creating entities
+- `update` - Mutation for updating entities
+- `del` - Mutation for deleting entities
+
+**Example:**
+```typescript
+const pageable = new Pageable(0, 20, [{ property: 'name', direction: 'asc' }])
+const filters = ref(new Filters())
+const query = usePaginatedQuery<Product, number>('products', pageable, filters)
+const { data, fetchNextPage, hasNextPage } = query.page
+```
+
+---
+
+#### `useLoginService`
+
+Creates a login service for authentication.
+
+**Signature:**
+```typescript
+useLoginService(resource?: string): LoginService
+```
+
+**Parameters:**
+- `resource` - The API resource endpoint for login (defaults to 'auth')
+
+**Returns:** `LoginService` instance with:
+- `login(credentials: Login): Promise<User>` - Performs login
+
+**Example:**
+```typescript
+const loginService = useLoginService() // uses 'auth' endpoint
+const user = await loginService.login({ username: 'user', password: 'pass' })
+console.log(user.token)
+```
+
+---
 
 ### Query Classes
 
