@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.4.0
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.3.0...v1.4.0)
+
+### 🚀 Enhancements
+
+- Introduce `useQueryFetch` composable with new types, API documentation, and module integration. ([7ccb1f9](https://github.com/rlopezb/gen-query/commit/7ccb1f9))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.3.0
 
 
