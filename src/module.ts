@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addImportsDir, installModule } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addImportsDir, addPlugin } from '@nuxt/kit'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -19,7 +19,11 @@ export default defineNuxtModule<ModuleOptions>({
       baseURL: options.baseURL,
     }
     const resolver = createResolver(import.meta.url)
-    await installModule('@hebilicious/vue-query-nuxt')
+
+    // Add Vue Query plugin with SSR support
+    addPlugin(resolver.resolve('runtime/plugin'))
+
+    // Auto-import composables
     addImportsDir(resolver.resolve('runtime/composables'))
   },
 })

@@ -119,7 +119,7 @@ export class Filters {
           const conditions = constraints.map(c => `${field}:${c.matchMode}:${c.value}`)
           params.push(`filter=${encodeURIComponent(conditions.join(filterItem.operator === 'and' ? '&' : '|'))}`)
         }
-        else if (constraints.length === 1) {
+        else if (constraints.length === 1 && constraints[0] !== undefined) {
           const constraint = constraints[0]
           const matchMode = constraint.matchMode
           let value = constraint.value
