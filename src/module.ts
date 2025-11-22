@@ -25,8 +25,19 @@ export default defineNuxtModule<ModuleOptions>({
     // Add Vue Query plugin with SSR support
     addPlugin(resolver.resolve('runtime/plugin'))
 
-    // Auto-import composables
-    addImportsDir(resolver.resolve('runtime/composables'))
+    // Explicitly import public composables (excluding useQueryFetch which is internal)
+    const composables = [
+      { name: 'useLoginService', from: resolver.resolve('runtime/composables/useLoginService') },
+      { name: 'useSingleQuery', from: resolver.resolve('runtime/composables/useSingleQuery') },
+      { name: 'useMultipleQuery', from: resolver.resolve('runtime/composables/useMultipleQuery') },
+      { name: 'usePaginatedQuery', from: resolver.resolve('runtime/composables/usePaginatedQuery') },
+    ]
+
+    composables.forEach(({ name, from }) => {
+      nuxt.hook('imports:extend', (imports) => {
+        imports.push({ name, from })
+      })
+    })
   },
 })
 

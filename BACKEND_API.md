@@ -694,23 +694,54 @@ LIMIT 20 OFFSET 0
 
 Use the gen-query playground or create a simple Nuxt app:
 
-```typescript
-// Frontend test
-const service = new Service<Product, number>('products', token)
+```vue
+<script setup lang="ts">
+import { Pageable, Filters } from 'gen-query'
+import type { Entity } from 'gen-query'
+
+interface Product extends Entity<number> {
+  name: string
+  price: number
+  category: string
+}
+
+const token = ref('your-auth-token')
+
+// Test list and CRUD operations
+const productQuery = useMultipleQuery<Product, number>('products', token)
 
 // Test list
-const products = await service.list()
+const { data: products } = productQuery.list
 
-// Test pagination
-const page = await service.page(
-  new Pageable(0, 20, [{ property: 'name', direction: 'asc' }]),
-  filters
+// Test create
+const { mutate: createProduct } = productQuery.create
+createProduct({ name: 'Test Product', price: 99 })
+
+// Test update
+const { mutate: updateProduct } = productQuery.update
+updateProduct({ id: 1, name: 'Updated Product', price: 89 })
+
+// Test delete
+const { mutate: deleteProduct } = productQuery.delete
+deleteProduct({ id: 1 })
+
+// Test pagination with filters
+const pageable = new Pageable(0, 20, [{ property: 'name', direction: 'asc' }])
+const filters = ref(new Filters())
+filters.value.price = {
+  operator: 'and',
+  constraints: [{ matchMode: 'gte', value: 50 }]
+}
+
+const paginatedQuery = usePaginatedQuery<Product, number>(
+  'products',
+  pageable,
+  filters,
+  token
 )
 
-// Test CRUD
-const created = await service.create({ name: 'Test', price: 99 })
-const updated = await service.update({ ...created, price: 89 })
-await service.delete(updated)
+const { data: page } = paginatedQuery.page
+</script>
 ```
 
 ---
