@@ -1,5 +1,4 @@
 onlyBuiltDependencies:
-  - '@hebilicious/vue-query-nuxt'
   - '@parcel/watcher'
   - esbuild
   - unrs-resolver

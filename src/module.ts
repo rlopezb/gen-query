@@ -1,4 +1,5 @@
-import { defineNuxtModule, createResolver, addImportsDir, addPlugin } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImportsDir } from '@nuxt/kit'
+import { defu } from 'defu'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -14,10 +15,11 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     baseURL: process.env.NUXT_PUBLIC_API_BASE_URL || '',
   },
-  async setup(options, nuxt) {
-    nuxt.options.runtimeConfig.public.genQuery = {
+  setup(options, nuxt) {
+    nuxt.options.runtimeConfig.public.genQuery = defu(nuxt.options.runtimeConfig.public.genQuery, {
       baseURL: options.baseURL,
-    }
+    })
+
     const resolver = createResolver(import.meta.url)
 
     // Add Vue Query plugin with SSR support
@@ -30,5 +32,3 @@ export default defineNuxtModule<ModuleOptions>({
 
 export type { Login, User, Entity, Page, FilterItem, Constraint, Sort } from './runtime/types'
 export type { Pageable, Filters, ApiError } from './runtime/models'
-export { Service, LoginService } from './runtime/services'
-export { SingleQuery, MultipleQuery, PaginatedQuery, BaseQuery } from './runtime/queries'
