@@ -1,8 +1,8 @@
 import type { FetchOptions } from 'ofetch'
 import type { $Fetch } from 'nitropack'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { useRuntimeConfig } from '#app'
 import { ApiError } from '../models'
-import { useRuntimeConfig } from '@nuxt/kit'
 
 /**
  * Options for the query fetcher.
