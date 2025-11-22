@@ -23,80 +23,56 @@ export class BaseQuery<T extends Entity<K>, K> {
   protected invalidate = () => this.queryClient.invalidateQueries({ queryKey: this.queryKey })
 
   /**
-   * Mutation to create a new entity.
-   * Performs optimistic updates to the cache.
+   * Creates an optimistic mutation with common error handling and cache invalidation.
    */
-  public create = useMutation({
-    mutationFn: (entity: T) => this.service.create(entity),
-    onMutate: async (newEntity: T) => {
-      await this.queryClient.cancelQueries({ queryKey: this.queryKey })
-      const previousData = this.queryClient.getQueryData(this.queryKey!)
-      this.queryClient.setQueryData(this.queryKey!, (old: unknown) => {
-        if (Array.isArray(old)) return [...old, newEntity]
-        // Handle paginated data structure if necessary, or other shapes
-        return old
-      })
-      return { previousData }
-    },
-    onError: (_err: ApiError, _newEntity: T, context: { previousData: unknown } | undefined) => {
-      this.queryClient.setQueryData(this.queryKey!, context?.previousData)
-    },
-    onSettled: () => {
-      this.invalidate()
-    },
-  })
+  private createOptimisticMutation<TData = T>(
+    mutationFn: (data: TData) => Promise<T>,
+    updateCache: (old: unknown, data: TData) => unknown,
+  ) {
+    return useMutation({
+      mutationFn,
+      onMutate: async (data: TData) => {
+        await this.queryClient.cancelQueries({ queryKey: this.queryKey })
+        const previousData = this.queryClient.getQueryData(this.queryKey!)
+        this.queryClient.setQueryData(this.queryKey!, (old: unknown) => updateCache(old, data))
+        return { previousData }
+      },
+      onError: (_err: ApiError, _data: TData, context: { previousData: unknown } | undefined) => {
+        this.queryClient.setQueryData(this.queryKey!, context?.previousData)
+      },
+      onSettled: () => this.invalidate(),
+    })
+  }
 
   /**
-   * Mutation to update an existing entity.
-   * Performs optimistic updates to the cache.
+   * Mutation to create a new entity with optimistic updates.
    */
-  public update = useMutation({
-    mutationFn: (entity: T) => this.service.update(entity),
-    onMutate: async (newEntity: T) => {
-      await this.queryClient.cancelQueries({ queryKey: this.queryKey })
-      const previousData = this.queryClient.getQueryData(this.queryKey!)
-      this.queryClient.setQueryData(this.queryKey!, (old: unknown) => {
-        if (Array.isArray(old)) {
-          return old.map((item: T) => item.id === newEntity.id ? newEntity : item)
-        }
-        // Handle single entity update if queryKey points to one
-        if (old && (old as T).id === newEntity.id) return newEntity
-        return old
-      })
-      return { previousData }
-    },
-    onError: (_err: ApiError, _newEntity: T, context: { previousData: unknown } | undefined) => {
-      this.queryClient.setQueryData(this.queryKey!, context?.previousData)
-    },
-    onSettled: () => {
-      this.invalidate()
-    },
-  })
+  public create = this.createOptimisticMutation(
+    (entity: T) => this.service.create(entity),
+    (old, newEntity) => Array.isArray(old) ? [...old, newEntity] : old,
+  )
 
   /**
-   * Mutation to delete an entity.
-   * Performs optimistic updates to the cache.
+   * Mutation to update an existing entity with optimistic updates.
    */
-  public del = useMutation({
-    mutationFn: (entity: T) => this.service.delete(entity),
-    onMutate: async (deletedEntity: T) => {
-      await this.queryClient.cancelQueries({ queryKey: this.queryKey })
-      const previousData = this.queryClient.getQueryData(this.queryKey!)
-      this.queryClient.setQueryData(this.queryKey!, (old: unknown) => {
-        if (Array.isArray(old)) {
-          return old.filter((item: T) => item.id !== deletedEntity.id)
-        }
-        return old
-      })
-      return { previousData }
+  public update = this.createOptimisticMutation(
+    (entity: T) => this.service.update(entity),
+    (old, newEntity) => {
+      if (Array.isArray(old)) {
+        return old.map((item: T) => item.id === newEntity.id ? newEntity : item)
+      }
+      if (old && (old as T).id === newEntity.id) return newEntity
+      return old
     },
-    onError: (_err: ApiError, _newEntity: T, context: { previousData: unknown } | undefined) => {
-      this.queryClient.setQueryData(this.queryKey!, context?.previousData)
-    },
-    onSettled: () => {
-      this.invalidate()
-    },
-  })
+  )
+
+  /**
+   * Mutation to delete an entity with optimistic updates.
+   */
+  public del = this.createOptimisticMutation(
+    (entity: T) => this.service.delete(entity),
+    (old, deletedEntity) => Array.isArray(old) ? old.filter((item: T) => item.id !== deletedEntity.id) : old,
+  )
 }
 
 /**
@@ -105,13 +81,14 @@ export class BaseQuery<T extends Entity<K>, K> {
 export class SingleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
   id: Ref<K>
   public read: UseQueryReturnType<T, ApiError>
+
   constructor(resource: string, id: Ref<K>, token?: MaybeRefOrGetter<string | undefined>) {
     super(resource, token)
     this.id = id
     this.queryKey = [this.resource, this.id]
     this.read = useQuery({
       queryKey: this.queryKey,
-      queryFn: async () => await this.service.read(this.id.value),
+      queryFn: () => this.service.read(this.id.value),
       placeholderData: keepPreviousData,
     })
   }
@@ -122,12 +99,13 @@ export class SingleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
  */
 export class MultipleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
   public list: UseQueryReturnType<T[], ApiError>
+
   constructor(resource: string, token?: MaybeRefOrGetter<string | undefined>) {
     super(resource, token)
     this.queryKey = [this.resource]
     this.list = useQuery({
       queryKey: this.queryKey,
-      queryFn: async () => await this.service.list(),
+      queryFn: () => this.service.list(),
       placeholderData: keepPreviousData,
     })
   }
@@ -140,6 +118,7 @@ export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
   pageable: Pageable
   filters: Ref<Filters>
   public page
+
   constructor(resource: string, pageable: Pageable, filters: Ref<Filters>, token?: MaybeRefOrGetter<string | undefined>) {
     super(resource, token)
     this.pageable = pageable
@@ -148,29 +127,25 @@ export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
     this.page = useInfiniteQuery({
       initialPageParam: { pageable: this.pageable },
       queryKey: this.queryKey,
-      queryFn: async ({ pageParam }: { pageParam: { pageable: Pageable } }) => await this.service.page(pageParam.pageable, this.filters.value),
+      queryFn: ({ pageParam }: { pageParam: { pageable: Pageable } }) => this.service.page(pageParam.pageable, this.filters.value),
       getNextPageParam: (lastPage: Page<T>, _: Page<T>[], lastPageParam: { pageable: Pageable }) => {
-        if (lastPage!.page.number === lastPage!.page.totalPages - 1) {
-          return undefined
-        }
-        else {
-          const nextPageable = new Pageable()
-          nextPageable.page = lastPageParam.pageable.page + 1
-          nextPageable.size = lastPageParam.pageable.size
-          nextPageable.sort = lastPageParam.pageable.sort
-          return { pageable: nextPageable }
+        if (lastPage.page.number >= lastPage.page.totalPages - 1) return undefined
+        return {
+          pageable: new Pageable(
+            lastPageParam.pageable.page + 1,
+            lastPageParam.pageable.size,
+            lastPageParam.pageable.sort,
+          ),
         }
       },
       getPreviousPageParam: (firstPage: Page<T>, _: Page<T>[], firstPageParam: { pageable: Pageable }) => {
-        if (firstPage!.page.number === 0) {
-          return undefined
-        }
-        else {
-          const nextPageable = new Pageable()
-          nextPageable.page = firstPageParam.pageable.page - 1
-          nextPageable.size = firstPageParam.pageable.size
-          nextPageable.sort = firstPageParam.pageable.sort
-          return { pageable: nextPageable }
+        if (firstPage.page.number === 0) return undefined
+        return {
+          pageable: new Pageable(
+            firstPageParam.pageable.page - 1,
+            firstPageParam.pageable.size,
+            firstPageParam.pageable.sort,
+          ),
         }
       },
       maxPages: 4,

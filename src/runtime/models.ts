@@ -57,18 +57,14 @@ export const isIsoDateString = (value: unknown): boolean =>
  */
 export const handleDates = <T>(body: T): T => {
   if (!body || typeof body !== 'object') return body
-
-  // Handle arrays by processing each element
-  if (Array.isArray(body)) {
-    return body.map(item => handleDates(item)) as T
-  }
+  if (Array.isArray(body)) return body.map(handleDates) as T
 
   for (const key of Object.keys(body)) {
     const value = (body as Record<string, unknown>)[key]
-    if (typeof value === 'string' && isIsoDateString(value)) {
-      (body as Record<string, unknown>)[key] = new Date(value)
+    if (isIsoDateString(value)) {
+      (body as Record<string, unknown>)[key] = new Date(value as string)
     }
-    else if (typeof value === 'object' && value !== null) {
+    else if (value && typeof value === 'object') {
       (body as Record<string, unknown>)[key] = handleDates(value)
     }
   }
@@ -112,24 +108,25 @@ export class Filters {
    */
   public toQueryParams = (): string => {
     const params: string[] = []
+
     for (const [field, filterItem] of Object.entries(this)) {
-      if (typeof filterItem !== 'function') {
-        const constraints = filterItem.constraints.filter(c => c.value)
-        if (constraints.length > 1) {
-          const conditions = constraints.map(c => `${field}:${c.matchMode}:${c.value}`)
-          params.push(`filter=${encodeURIComponent(conditions.join(filterItem.operator === 'and' ? '&' : '|'))}`)
-        }
-        else if (constraints.length === 1 && constraints[0] !== undefined) {
-          const constraint = constraints[0]
-          const matchMode = constraint.matchMode
-          let value = constraint.value
-          if (value instanceof Date) {
-            value = formatDate(value.toISOString())
-          }
-          params.push(`filter=${encodeURIComponent(`${field}‚${matchMode}‚${value}`)}`)
-        }
+      if (typeof filterItem === 'function') continue
+
+      const constraints = filterItem.constraints.filter(c => c.value)
+      if (constraints.length === 0) continue
+
+      if (constraints.length > 1) {
+        const conditions = constraints.map(c => `${field}:${c.matchMode}:${c.value}`)
+        const separator = filterItem.operator === 'and' ? '&' : '|'
+        params.push(`filter=${encodeURIComponent(conditions.join(separator))}`)
+      }
+      else {
+        const { matchMode, value } = constraints[0]!
+        const formattedValue = value instanceof Date ? formatDate(value.toISOString()) : value
+        params.push(`filter=${encodeURIComponent(`${field}‚${matchMode}‚${formattedValue}`)}`)
       }
     }
+
     return params.join('&')
   }
 }
