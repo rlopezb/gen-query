@@ -1,5 +1,5 @@
 import type { Ref, MaybeRefOrGetter } from 'vue'
-import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery } from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQueryClient, type QueryClient, type UseQueryReturnType, useQuery, useInfiniteQuery, type UseInfiniteQueryReturnType } from '@tanstack/vue-query'
 import { Service } from './services'
 import { type Filters, Pageable, type ApiError } from './models'
 import type { Entity, Page } from './types'
@@ -117,7 +117,7 @@ export class MultipleQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
 export class PaginatedQuery<T extends Entity<K>, K> extends BaseQuery<T, K> {
   pageable: Pageable
   filters: Ref<Filters>
-  public page
+  public page: UseInfiniteQueryReturnType<Page<T>, ApiError>
 
   constructor(resource: string, pageable: Pageable, filters: Ref<Filters>, token?: MaybeRefOrGetter<string | undefined>) {
     super(resource, token)
