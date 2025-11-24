@@ -97,12 +97,12 @@ const token = ref('your-auth-token')
 
 const productQuery = useSingleQuery<Product, number>('products', productId, token)
 
-const { data: product, isLoading, isError } = productQuery.get
+const { data: product, isLoading, isError, error } = productQuery.read
 </script>
 
 <template>
   <div v-if="isLoading">Loading...</div>
-  <div v-else-if="isError">Error loading product</div>
+  <div v-else-if="isError">Error: {{ error?.message }}</div>
   <div v-else-if="product">
     <h1>{{ product.name }}</h1>
     <p>Price: ${{ product.price }}</p>
@@ -128,19 +128,19 @@ const token = ref('your-auth-token')
 const productQuery = useMultipleQuery<Product, number>('products', token)
 
 // Fetch all products
-const { data: products, isLoading } = productQuery.list
+const { data: products, isLoading, isError, error } = productQuery.list
 
 // Create a new product
-const { mutate: createProduct } = productQuery.create
+const { mutate: createProduct, isPending: isCreating } = productQuery.create
 const newProduct = { name: 'New Product', price: 99.99, category: 'electronics' }
 createProduct(newProduct)
 
 // Update a product
-const { mutate: updateProduct } = productQuery.update
+const { mutate: updateProduct, isPending: isUpdating } = productQuery.update
 updateProduct({ id: 1, name: 'Updated Product', price: 89.99, category: 'electronics' })
 
 // Delete a product
-const { mutate: deleteProduct } = productQuery.delete
+const { mutate: deleteProduct, isPending: isDeleting } = productQuery.del
 deleteProduct({ id: 1 })
 </script>
 ```
@@ -191,16 +191,18 @@ const productQuery = usePaginatedQuery<Product, number>(
   token
 )
 
-const { data: page, isLoading } = productQuery.page
+const { data: pages, isLoading, isError, error } = productQuery.page
 
 // Access paginated data
-const products = computed(() => page.value?.content ?? [])
-const totalPages = computed(() => page.value?.page.totalPages ?? 0)
-const totalElements = computed(() => page.value?.page.totalElements ?? 0)
+const currentPage = computed(() => pages.value?.pages[0])
+const products = computed(() => currentPage.value?.content ?? [])
+const totalPages = computed(() => currentPage.value?.page.totalPages ?? 0)
+const totalElements = computed(() => currentPage.value?.page.totalElements ?? 0)
 </script>
 
 <template>
   <div v-if="isLoading">Loading...</div>
+  <div v-else-if="isError">Error: {{ error?.message }}</div>
   <div v-else>
     <div v-for="product in products" :key="product.id">
       <h3>{{ product.name }}</h3>
@@ -276,12 +278,19 @@ Creates a login service for authentication.
 **Parameters:**
 - `resource` (optional): API endpoint for login. Default: `'auth'`
 
-**Returns:** Object with `login` mutation
+**Returns:** Object with:
+- `login`: Mutation object with:
+  - `mutate()`: Function to trigger the login mutation
+  - `isPending`: `true` while the login is in progress
+  - `isError`: `true` if the login failed
+  - `isSuccess`: `true` if the login succeeded
+  - `error`: Error object if the login failed (type `ApiError`)
+  - `data`: User data returned on successful login (type `User`)
 
 **Example:**
 ```typescript
 const loginService = useLoginService('auth')
-const { mutate: login } = loginService.login
+const { mutate: login, isPending, isError, error } = loginService.login
 ```
 
 ---
@@ -299,7 +308,19 @@ Fetches a single entity by ID.
 - `id`: Reactive reference to entity ID
 - `token` (optional): Authentication token
 
-**Returns:** Object with `get` query
+**Returns:** Object with:
+- `read`: Query object with reactive properties:
+  - `data`: The fetched entity data (type `T`)
+  - `error`: Error object if the query failed (type `ApiError`)
+  - `isLoading`: `true` when fetching for the first time
+  - `isError`: `true` if the query encountered an error
+  - `isSuccess`: `true` if the query completed successfully
+  - `isFetching`: `true` when fetching (including background refetches)
+  - `status`: Query status string (`'loading'`, `'error'`, or `'success'`)
+  - `refetch()`: Function to manually refetch the data
+- `create`: Mutation for creating entities
+- `update`: Mutation for updating entities
+- `del`: Mutation for deleting entities
 
 ---
 
@@ -316,10 +337,23 @@ Provides CRUD operations for a collection of entities.
 - `token` (optional): Authentication token
 
 **Returns:** Object with:
-- `list`: Query for fetching all entities
-- `create`: Mutation for creating entities
-- `update`: Mutation for updating entities
-- `delete`: Mutation for deleting entities
+- `list`: Query object with reactive properties:
+  - `data`: Array of fetched entities (type `T[]`)
+  - `error`: Error object if the query failed (type `ApiError`)
+  - `isLoading`: `true` when fetching for the first time
+  - `isError`: `true` if the query encountered an error
+  - `isSuccess`: `true` if the query completed successfully
+  - `isFetching`: `true` when fetching (including background refetches)
+  - `status`: Query status string (`'loading'`, `'error'`, or `'success'`)
+  - `refetch()`: Function to manually refetch the data
+- `create`: Mutation object with:
+  - `mutate()`: Function to trigger the mutation
+  - `isPending`: `true` while the mutation is in progress
+  - `isError`: `true` if the mutation failed
+  - `isSuccess`: `true` if the mutation succeeded
+  - `error`: Error object if the mutation failed
+- `update`: Mutation object (same properties as `create`)
+- `del`: Mutation object (same properties as `create`)
 
 ---
 
@@ -338,8 +372,23 @@ Fetches paginated entities with filtering and sorting.
 - `token` (optional): Authentication token
 
 **Returns:** Object with:
-- `page`: Query for paginated data
-- `infinite`: Infinite query for infinite scrolling
+- `page`: Infinite query object with reactive properties:
+  - `data`: Paginated data with pages array (type `{ pages: Page<T>[], pageParams: any[] }`)
+  - `error`: Error object if the query failed (type `ApiError`)
+  - `isLoading`: `true` when fetching the first page
+  - `isError`: `true` if the query encountered an error
+  - `isSuccess`: `true` if the query completed successfully
+  - `isFetching`: `true` when fetching any page
+  - `isFetchingNextPage`: `true` when fetching the next page
+  - `isFetchingPreviousPage`: `true` when fetching the previous page
+  - `hasNextPage`: `true` if there are more pages to fetch
+  - `hasPreviousPage`: `true` if there are previous pages
+  - `fetchNextPage()`: Function to fetch the next page
+  - `fetchPreviousPage()`: Function to fetch the previous page
+  - `refetch()`: Function to refetch all pages
+- `create`: Mutation for creating entities
+- `update`: Mutation for updating entities
+- `del`: Mutation for deleting entities
 
 ---
 
