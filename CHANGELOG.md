@@ -1,6 +1,32 @@
 # Changelog
 
 
+## v1.6.0
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.5.0...v1.6.0)
+
+### 🚀 Enhancements
+
+- Add build configuration for module and update package metadata with `require` export. ([3959b40](https://github.com/rlopezb/gen-query/commit/3959b40))
+- Add gen-query module implementation and comprehensive documentation, removing a server tsconfig. ([7ab1df3](https://github.com/rlopezb/gen-query/commit/7ab1df3))
+- Refactor optimistic mutations into a shared helper, simplify query function calls and pagination, and enhance API error handling. ([846fd3f](https://github.com/rlopezb/gen-query/commit/846fd3f))
+- Update README examples and API descriptions to reflect new `read` method, `del` mutation, and expanded query/mutation states like `isPending`, `isError`, and `error`. ([6fa3102](https://github.com/rlopezb/gen-query/commit/6fa3102))
+
+### 💅 Refactors
+
+- Delete custom type declarations and explicitly import `useRuntimeConfig` in `useQueryFetch`. ([586aa08](https://github.com/rlopezb/gen-query/commit/586aa08))
+- Update `useRuntimeConfig` import path from `@nuxt/kit` to `#app`. ([ea66142](https://github.com/rlopezb/gen-query/commit/ea66142))
+- Add `UseInfiniteQueryReturnType` type to `PaginatedQuery.page` and bump package version. ([2f117f8](https://github.com/rlopezb/gen-query/commit/2f117f8))
+
+### 🏡 Chore
+
+- Remove playground and test fixtures, and refactor module options and exports. ([01c924d](https://github.com/rlopezb/gen-query/commit/01c924d))
+- Bump package version to 1.5.3 ([39b3146](https://github.com/rlopezb/gen-query/commit/39b3146))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.5.0
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.4.0...v1.5.0)
