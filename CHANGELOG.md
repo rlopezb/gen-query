@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.7.0
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.6.0...v1.7.0)
+
+### 🚀 Enhancements
+
+- Introduce advanced cache update strategies, infinite scroll, and comprehensive usage examples for all composables. ([18da780](https://github.com/rlopezb/gen-query/commit/18da780))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.6.0
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.5.0...v1.6.0)
