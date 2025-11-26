@@ -16,17 +16,17 @@ export interface QueryFetchOptions extends FetchOptions {
  * Reduces code duplication across error handlers.
  */
 const createApiError = (response?: unknown, error?: Error): ApiError => {
-  const { _data = {}, status = -1 } = (response as { _data?: Record<string, unknown>, status?: number }) || {}
+  const { data = {}, status = -1 } = (response as { data?: Record<string, unknown>, status?: number }) || {}
 
   return new ApiError(
-    (_data.message as string) || error?.message || 'Unknown Error',
-    (_data.type as string) || 'error',
-    (_data.name as string) || error?.name || 'Error',
-    (_data.stack as string) || error?.stack,
-    (_data.statusCode as number) || status,
-    (_data.status as string) || 'error',
-    (_data.content as object) || {},
-    _data.cause || error?.cause,
+    (data.message as string) || error?.message || 'Unknown Error',
+    (data.type as string) || 'error',
+    (data.name as string) || error?.name || 'Error',
+    (data.stack as string) || error?.stack,
+    (data.statusCode as number) || status,
+    (data.status as string) || 'error',
+    (data.content as object) || {},
+    data.cause || error?.cause,
   )
 }
 

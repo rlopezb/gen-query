@@ -1,4 +1,13 @@
 /**
+ * Type definition for mutation update strategies.
+ */
+export enum UpdateStrategy {
+  None,
+  Invalidate,
+  Optimistic,
+}
+
+/**
  * Type definition for login credentials.
  */
 export type Login = {

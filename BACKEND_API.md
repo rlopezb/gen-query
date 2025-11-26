@@ -5,15 +5,16 @@ This document provides a complete specification for backend developers implement
 ## Table of Contents
 
 - [Overview](#overview)
-- [Base Configuration](#base-configuration)
+- [Quick Reference](#quick-reference)
 - [Authentication](#authentication)
 - [CRUD Operations](#crud-operations)
-- [Pagination and Filtering](#pagination-and-filtering)
-- [Query Parameters](#query-parameters)
+- [Pagination Endpoint](#pagination-endpoint)
 - [Filter Syntax](#filter-syntax)
-- [Response Formats](#response-formats)
+- [Sorting](#sorting)
 - [Error Handling](#error-handling)
 - [Complete Examples](#complete-examples)
+- [Implementation Checklist](#implementation-checklist)
+- [Testing Guide](#testing-guide)
 
 ---
 
@@ -21,15 +22,13 @@ This document provides a complete specification for backend developers implement
 
 gen-query expects a RESTful API that follows these conventions:
 
-- **JSON** for all request and response bodies
-- **ISO 8601** format for dates (`2024-01-15T10:30:00Z`)
-- **Bearer token** authentication (optional)
-- **0-indexed** pagination
-- **Consistent** error response format
+- **Content Type**: JSON for all request and response bodies
+- **Date Format**: ISO 8601 (`2024-01-15T10:30:00Z`)
+- **Authentication**: Bearer token (optional)
+- **Pagination**: 0-indexed pages
+- **Error Format**: Consistent error response structure
 
----
-
-## Base Configuration
+### Base URL
 
 All endpoints are relative to a base URL configured in the frontend:
 
@@ -40,10 +39,24 @@ genQuery: {
 }
 ```
 
-For a resource named `products`, all endpoints will be prefixed with:
+For a resource named `products`, endpoints will be:
 ```
 https://api.example.com/products
 ```
+
+---
+
+## Quick Reference
+
+| Method | Endpoint | Purpose | Request Body | Response |
+|--------|----------|---------|--------------|----------|
+| POST | `/{resource}/login` | Authenticate user | `Login` | `User` |
+| GET | `/{resource}` | List all entities | - | `T[]` |
+| GET | `/{resource}/{id}` | Read single entity | - | `T` |
+| POST | `/{resource}` | Create entity | `T` | `T` |
+| PUT | `/{resource}` | Update entity | `T` | `T` |
+| DELETE | `/{resource}` | Delete entity | `T` | `T` |
+| GET | `/{resource}/page` | Paginated list | - | `Page<T>` |
 
 ---
 
@@ -51,12 +64,12 @@ https://api.example.com/products
 
 ### Login Endpoint
 
-**URL Pattern:** `POST /{resource}/login`
+**Endpoint:** `POST /{resource}/login`
 
 **Example:** `POST /auth/login`
 
 **Request Headers:**
-```
+```http
 Content-Type: application/json
 Accept: application/json
 ```
@@ -69,17 +82,17 @@ Accept: application/json
 }
 ```
 
-**Success Response (200):**
+**Success Response (200 OK):**
 ```json
 {
   "username": "user@example.com",
   "fullName": "John Doe",
   "email": "user@example.com",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
-**Error Response (401):**
+**Error Response (401 Unauthorized):**
 ```json
 {
   "message": "Invalid credentials",
@@ -90,23 +103,31 @@ Accept: application/json
 }
 ```
 
+### Using Authentication Token
+
+For authenticated requests, include the token in the Authorization header:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
 ---
 
 ## CRUD Operations
 
 ### 1. List All Entities
 
-**URL Pattern:** `GET /{resource}`
+**Endpoint:** `GET /{resource}`
 
 **Example:** `GET /products`
 
 **Request Headers:**
-```
+```http
 Accept: application/json
-Authorization: Bearer {token}  // Optional
+Authorization: Bearer {token}  # Optional
 ```
 
-**Success Response (200):**
+**Success Response (200 OK):**
 ```json
 [
   {
@@ -134,17 +155,17 @@ Authorization: Bearer {token}  // Optional
 
 ### 2. Read Single Entity
 
-**URL Pattern:** `GET /{resource}/{id}`
+**Endpoint:** `GET /{resource}/{id}`
 
 **Example:** `GET /products/1`
 
 **Request Headers:**
-```
+```http
 Accept: application/json
-Authorization: Bearer {token}  // Optional
+Authorization: Bearer {token}  # Optional
 ```
 
-**Success Response (200):**
+**Success Response (200 OK):**
 ```json
 {
   "id": 1,
@@ -163,10 +184,10 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
-**Error Response (404):**
+**Error Response (404 Not Found):**
 ```json
 {
-  "message": "Product not found",
+  "message": "Product with id 1 not found",
   "type": "error",
   "name": "NotFoundError",
   "statusCode": 404,
@@ -178,15 +199,15 @@ Authorization: Bearer {token}  // Optional
 
 ### 3. Create Entity
 
-**URL Pattern:** `POST /{resource}`
+**Endpoint:** `POST /{resource}`
 
 **Example:** `POST /products`
 
 **Request Headers:**
-```
+```http
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer {token}  // Optional
+Authorization: Bearer {token}  # Optional
 ```
 
 **Request Body:**
@@ -200,7 +221,9 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
-**Success Response (201):**
+> **Note:** The `id` field should NOT be included in the request body. The server generates it.
+
+**Success Response (201 Created):**
 ```json
 {
   "id": 3,
@@ -214,7 +237,7 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
-**Error Response (400):**
+**Error Response (400 Bad Request):**
 ```json
 {
   "message": "Validation failed",
@@ -227,6 +250,10 @@ Authorization: Bearer {token}  // Optional
       {
         "field": "price",
         "message": "Price must be a positive number"
+      },
+      {
+        "field": "name",
+        "message": "Name is required"
       }
     ]
   }
@@ -237,15 +264,15 @@ Authorization: Bearer {token}  // Optional
 
 ### 4. Update Entity
 
-**URL Pattern:** `PUT /{resource}`
+**Endpoint:** `PUT /{resource}`
 
 **Example:** `PUT /products`
 
 **Request Headers:**
-```
+```http
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer {token}  // Optional
+Authorization: Bearer {token}  # Optional
 ```
 
 **Request Body:**
@@ -260,7 +287,9 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
-**Success Response (200):**
+> **Important:** The `id` field MUST be included to identify which entity to update.
+
+**Success Response (200 OK):**
 ```json
 {
   "id": 1,
@@ -274,19 +303,30 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
+**Error Response (404 Not Found):**
+```json
+{
+  "message": "Product with id 1 not found",
+  "type": "error",
+  "name": "NotFoundError",
+  "statusCode": 404,
+  "status": "error"
+}
+```
+
 ---
 
 ### 5. Delete Entity
 
-**URL Pattern:** `DELETE /{resource}`
+**Endpoint:** `DELETE /{resource}`
 
 **Example:** `DELETE /products`
 
 **Request Headers:**
-```
+```http
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer {token}  // Optional
+Authorization: Bearer {token}  # Optional
 ```
 
 **Request Body:**
@@ -296,34 +336,61 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
-**Success Response (200):**
+> **Important:** The `id` field MUST be included to identify which entity to delete.
+
+**Success Response (200 OK):**
 ```json
 {
   "id": 3,
   "name": "Mechanical Keyboard",
+  "price": 149.99,
+  "category": "accessories",
   "deleted": true
 }
 ```
 
-**Alternative:** Some APIs prefer soft deletes and return the full entity with a `deletedAt` timestamp.
+> **Alternative:** Some APIs prefer soft deletes and return the full entity with a `deletedAt` timestamp instead of a `deleted` boolean.
+
+**Error Response (404 Not Found):**
+```json
+{
+  "message": "Product with id 3 not found",
+  "type": "error",
+  "name": "NotFoundError",
+  "statusCode": 404,
+  "status": "error"
+}
+```
 
 ---
 
-## Pagination and Filtering
+## Pagination Endpoint
 
-### Paginated List Endpoint
+### Paginated List
 
-**URL Pattern:** `GET /{resource}/page?{queryParams}`
+**Endpoint:** `GET /{resource}/page?{queryParams}`
 
-**Example:** `GET /products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚100`
+**Example:** 
+```
+GET /products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚100
+```
 
 **Request Headers:**
-```
+```http
 Accept: application/json
-Authorization: Bearer {token}  // Optional
+Authorization: Bearer {token}  # Optional
 ```
 
-**Success Response (200):**
+**Query Parameters:**
+
+| Parameter | Type | Required | Description | Example |
+|-----------|------|----------|-------------|---------|
+| `size` | integer | Yes | Number of items per page | `size=20` |
+| `page` | integer | Yes | Page number (0-indexed) | `page=0` |
+| `sort` | string | No | Field and direction (comma-separated) | `sort=name,asc` |
+| `filter` | string | No | Filter expression | `filter=price‚gte‚100` |
+
+**Success Response (200 OK):**
 ```json
 {
   "page": {
@@ -353,37 +420,16 @@ Authorization: Bearer {token}  // Optional
 }
 ```
 
----
+### Page Metadata
 
-## Query Parameters
+The `page` object contains pagination metadata:
 
-### Pagination Parameters
-
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `size` | integer | Yes | Number of items per page | `size=20` |
-| `page` | integer | Yes | Page number (0-indexed) | `page=0` |
-
-### Sorting Parameters
-
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `sort` | string | No | Field and direction (comma-separated) | `sort=name,asc` |
-
-**Multiple sorts:**
-```
-?sort=category,asc&sort=price,desc
-```
-
-**Sort directions:**
-- `asc` - Ascending order
-- `desc` - Descending order
-
-### Filter Parameters
-
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `filter` | string | No | Filter expression | `filter=price‚gte‚100` |
+| Field | Type | Description |
+|-------|------|-------------|
+| `number` | integer | Current page number (0-indexed) |
+| `size` | integer | Number of items per page |
+| `totalElements` | integer | Total number of items across all pages |
+| `totalPages` | integer | Total number of pages |
 
 ---
 
@@ -393,34 +439,36 @@ Authorization: Bearer {token}  // Optional
 
 **Format:** `field‚matchMode‚value`
 
+The separator is the Unicode character `‚` (U+201A, single low-9 quotation mark).
+
 **Example:**
 ```
 filter=price‚gte‚100
 ```
 
-**Decoded:** `price‚gte‚100` means "price greater than or equal to 100"
+**Meaning:** Price greater than or equal to 100
 
 ### Multiple Filters (AND)
 
-**Format:** `field1:matchMode:value1&field2:matchMode:value2`
+Use multiple `filter` parameters:
 
-**Example:**
 ```
-filter=name:contains:laptop&price:gte:500
+filter=category‚eq‚electronics&filter=price‚gte‚100&filter=price‚lte‚500
 ```
 
-**Decoded:** "name contains 'laptop' AND price >= 500"
+**Meaning:** Category equals "electronics" AND price >= 100 AND price <= 500
 
 ### Multiple Filters (OR)
 
-**Format:** `field:matchMode:value1|field:matchMode:value2`
+Use pipe `|` to separate conditions within a single filter:
 
-**Example:**
 ```
 filter=category:eq:electronics|category:eq:computers
 ```
 
-**Decoded:** "category equals 'electronics' OR category equals 'computers'"
+**Meaning:** Category equals "electronics" OR category equals "computers"
+
+> **Note:** When using OR logic, the separator changes from `‚` to `:` and values are separated by `|`.
 
 ### Match Modes
 
@@ -445,52 +493,61 @@ Dates should be sent as ISO 8601 strings:
 filter=createdAt‚gte‚2024-01-01T00:00:00Z
 ```
 
+The backend should parse ISO 8601 date strings and compare them appropriately.
+
+### Complex Filter Examples
+
+**Example 1:** Products priced between $100 and $500
+```
+filter=price‚gte‚100&filter=price‚lte‚500
+```
+
+**Example 2:** Electronics or computers category
+```
+filter=category:eq:electronics|category:eq:computers
+```
+
+**Example 3:** Name contains "laptop" and in stock
+```
+filter=name‚contains‚laptop&filter=stock‚gt‚0
+```
+
+**Example 4:** Created in 2024 and price > $50
+```
+filter=createdAt‚gte‚2024-01-01T00:00:00Z&filter=createdAt‚lt‚2025-01-01T00:00:00Z&filter=price‚gt‚50
+```
+
 ---
 
-## Response Formats
+## Sorting
 
-### Success Response Structure
+### Single Sort
 
-**List Response:**
-```json
-[
-  { "id": 1, "name": "Item 1" },
-  { "id": 2, "name": "Item 2" }
-]
+**Format:** `sort=field,direction`
+
+**Example:**
+```
+sort=name,asc
 ```
 
-**Single Entity Response:**
-```json
-{
-  "id": 1,
-  "name": "Item 1",
-  "createdAt": "2024-01-15T10:30:00Z"
-}
+**Directions:**
+- `asc` - Ascending order (A-Z, 0-9, oldest-newest)
+- `desc` - Descending order (Z-A, 9-0, newest-oldest)
+
+### Multiple Sorts
+
+Use multiple `sort` parameters to sort by multiple fields:
+
+```
+sort=category,asc&sort=price,desc
 ```
 
-**Paginated Response:**
-```json
-{
-  "page": {
-    "number": 0,
-    "size": 20,
-    "totalElements": 100,
-    "totalPages": 5
-  },
-  "content": [
-    { "id": 1, "name": "Item 1" }
-  ]
-}
+**Meaning:** Sort by category ascending, then by price descending within each category.
+
+**Example URL:**
 ```
-
-### Page Metadata
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `number` | integer | Current page number (0-indexed) |
-| `size` | integer | Number of items per page |
-| `totalElements` | integer | Total number of items across all pages |
-| `totalPages` | integer | Total number of pages |
+GET /products/page?size=20&page=0&sort=category,asc&sort=price,desc
+```
 
 ---
 
@@ -498,7 +555,7 @@ filter=createdAt‚gte‚2024-01-01T00:00:00Z
 
 ### Error Response Structure
 
-All errors should follow this format:
+All errors MUST follow this format:
 
 ```json
 {
@@ -527,7 +584,7 @@ All errors should follow this format:
 | 422 | Unprocessable Entity | Business logic validation failed |
 | 500 | Internal Server Error | Unexpected server error |
 
-### Example Error Responses
+### Error Examples
 
 **Validation Error (400):**
 ```json
@@ -563,6 +620,17 @@ All errors should follow this format:
 }
 ```
 
+**Authorization Error (403):**
+```json
+{
+  "message": "You do not have permission to perform this action",
+  "type": "error",
+  "name": "ForbiddenError",
+  "statusCode": 403,
+  "status": "error"
+}
+```
+
 **Not Found Error (404):**
 ```json
 {
@@ -574,60 +642,63 @@ All errors should follow this format:
 }
 ```
 
+**Server Error (500):**
+```json
+{
+  "message": "An unexpected error occurred",
+  "type": "error",
+  "name": "InternalServerError",
+  "statusCode": 500,
+  "status": "error",
+  "stack": "Error: ... (only in development)"
+}
+```
+
 ---
 
 ## Complete Examples
 
-### Example 1: Products API
-
-**Endpoints:**
-```
-POST   /auth/login
-GET    /products
-GET    /products/1
-POST   /products
-PUT    /products
-DELETE /products
-GET    /products/page
-```
-
-**Sample Requests:**
+### Example 1: Full CRUD Workflow
 
 ```bash
-# Login
+# 1. Login
 curl -X POST https://api.example.com/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"secret"}'
 
-# List all products
+# Response: {"username":"admin","token":"eyJhbG..."}
+
+# 2. List all products
 curl https://api.example.com/products \
-  -H "Authorization: Bearer {token}"
+  -H "Authorization: Bearer eyJhbG..."
 
-# Get product by ID
+# 3. Get product by ID
 curl https://api.example.com/products/1 \
-  -H "Authorization: Bearer {token}"
+  -H "Authorization: Bearer eyJhbG..."
 
-# Create product
+# 4. Create product
 curl -X POST https://api.example.com/products \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer {token}" \
-  -d '{"name":"New Product","price":99.99}'
+  -H "Authorization: Bearer eyJhbG..." \
+  -d '{"name":"New Product","price":99.99,"category":"electronics","stock":50}'
 
-# Update product
+# Response: {"id":10,"name":"New Product",...}
+
+# 5. Update product
 curl -X PUT https://api.example.com/products \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer {token}" \
-  -d '{"id":1,"name":"Updated Product","price":89.99}'
+  -H "Authorization: Bearer eyJhbG..." \
+  -d '{"id":10,"name":"Updated Product","price":89.99,"category":"electronics","stock":45}'
 
-# Delete product
+# 6. Delete product
 curl -X DELETE https://api.example.com/products \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer {token}" \
-  -d '{"id":1}'
+  -H "Authorization: Bearer eyJhbG..." \
+  -d '{"id":10}'
 
-# Paginated list with filters
-curl "https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚50" \
-  -H "Authorization: Bearer {token}"
+# 7. Paginated list with filters
+curl "https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚50&filter=category‚eq‚electronics" \
+  -H "Authorization: Bearer eyJhbG..."
 ```
 
 ---
@@ -653,9 +724,9 @@ LIMIT 20 OFFSET 0
 
 ---
 
-### Example 3: Search with Multiple Criteria
+### Example 3: Search with OR Logic
 
-**Scenario:** Search for products with "laptop" in name OR "computer" in name, in stock
+**Scenario:** Search for products with "laptop" OR "computer" in name, in stock
 
 **URL:**
 ```
@@ -672,27 +743,83 @@ LIMIT 20 OFFSET 0
 
 ---
 
-## Implementation Checklist
+### Example 4: Date Range Filtering
 
-- [ ] Implement all CRUD endpoints (GET, POST, PUT, DELETE)
-- [ ] Implement pagination endpoint with `/page` suffix
-- [ ] Support `size`, `page`, and `sort` query parameters
-- [ ] Implement filter parsing for all match modes
-- [ ] Support multiple filters (AND/OR logic)
-- [ ] Return consistent error format
-- [ ] Use ISO 8601 for all dates
-- [ ] Implement Bearer token authentication (if needed)
-- [ ] Add proper CORS headers
-- [ ] Validate all input data
-- [ ] Return appropriate HTTP status codes
-- [ ] Include pagination metadata in page responses
-- [ ] Test with gen-query frontend
+**Scenario:** Products created in January 2024
+
+**URL:**
+```
+GET /products/page?size=20&page=0&filter=createdAt‚gte‚2024-01-01T00:00:00Z&filter=createdAt‚lt‚2024-02-01T00:00:00Z
+```
+
+**Backend SQL (pseudo-code):**
+```sql
+SELECT * FROM products
+WHERE createdAt >= '2024-01-01T00:00:00Z'
+  AND createdAt < '2024-02-01T00:00:00Z'
+LIMIT 20 OFFSET 0
+```
 
 ---
 
-## Testing Your API
+## Implementation Checklist
 
-Use the gen-query playground or create a simple Nuxt app:
+Backend developers should ensure:
+
+- [ ] All CRUD endpoints implemented (GET, POST, PUT, DELETE)
+- [ ] Pagination endpoint with `/page` suffix
+- [ ] Support for `size`, `page`, `sort`, and `filter` query parameters
+- [ ] Filter parsing for all match modes (eq, ne, lt, lte, gt, gte, contains, startsWith, endsWith, in)
+- [ ] Support for multiple filters with AND logic (multiple filter params)
+- [ ] Support for multiple filters with OR logic (pipe-separated)
+- [ ] Consistent error response format
+- [ ] All dates in ISO 8601 format
+- [ ] Bearer token authentication (if required)
+- [ ] Proper CORS headers
+- [ ] Input validation for all endpoints
+- [ ] Appropriate HTTP status codes
+- [ ] Pagination metadata in page responses
+- [ ] 0-indexed pagination
+- [ ] Case-insensitive string matching for `contains`, `startsWith`, `endsWith`
+
+---
+
+## Testing Guide
+
+### Testing with curl
+
+```bash
+# Test list endpoint
+curl -X GET "https://api.example.com/products"
+
+# Test pagination
+curl -X GET "https://api.example.com/products/page?size=10&page=0"
+
+# Test sorting
+curl -X GET "https://api.example.com/products/page?size=10&page=0&sort=name,asc"
+
+# Test filtering
+curl -X GET "https://api.example.com/products/page?size=10&page=0&filter=price‚gte‚100"
+
+# Test create
+curl -X POST "https://api.example.com/products" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Product","price":99.99}'
+
+# Test update
+curl -X PUT "https://api.example.com/products" \
+  -H "Content-Type: application/json" \
+  -d '{"id":1,"name":"Updated Product","price":89.99}'
+
+# Test delete
+curl -X DELETE "https://api.example.com/products" \
+  -H "Content-Type: application/json" \
+  -d '{"id":1}'
+```
+
+### Testing with gen-query
+
+Create a simple Nuxt app to test your API:
 
 ```vue
 <script setup lang="ts">
@@ -707,22 +834,20 @@ interface Product extends Entity<number> {
 
 const token = ref('your-auth-token')
 
-// Test list and CRUD operations
-const productQuery = useMultipleQuery<Product, number>('products', token)
-
 // Test list
-const { data: products } = productQuery.list
+const productQuery = useMultipleQuery<Product, number>('products', token)
+const { data: products } = productQuery.read
 
 // Test create
 const { mutate: createProduct } = productQuery.create
-createProduct({ name: 'Test Product', price: 99 })
+createProduct({ name: 'Test Product', price: 99.99, category: 'test' })
 
 // Test update
 const { mutate: updateProduct } = productQuery.update
-updateProduct({ id: 1, name: 'Updated Product', price: 89 })
+updateProduct({ id: 1, name: 'Updated Product', price: 89.99, category: 'test' })
 
 // Test delete
-const { mutate: deleteProduct } = productQuery.delete
+const { mutate: deleteProduct } = productQuery.del
 deleteProduct({ id: 1 })
 
 // Test pagination with filters
@@ -740,9 +865,27 @@ const paginatedQuery = usePaginatedQuery<Product, number>(
   token
 )
 
-const { data: page } = paginatedQuery.page
+const { data: page } = paginatedQuery.read
 </script>
 ```
+
+### Validation Checklist
+
+Verify your API returns correct responses for:
+
+- [ ] Empty result sets (empty array `[]` or page with empty `content`)
+- [ ] Single item results
+- [ ] Large result sets
+- [ ] Invalid filter syntax
+- [ ] Invalid sort fields
+- [ ] Out of range page numbers
+- [ ] Invalid entity IDs
+- [ ] Missing required fields
+- [ ] Invalid data types
+- [ ] Duplicate entities
+- [ ] Concurrent updates
+- [ ] Authentication failures
+- [ ] Authorization failures
 
 ---
 

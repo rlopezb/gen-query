@@ -5,7 +5,7 @@
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-A powerful Nuxt module for type-safe API queries using TanStack Query (Vue Query) with generic types.
+A powerful Nuxt module for type-safe API queries using TanStack Query (Vue Query) with full TypeScript support and automatic cache management.
 
 - [✨ Release Notes](/CHANGELOG.md)
 - [📖 Backend API Specification](/BACKEND_API.md)
@@ -13,16 +13,17 @@ A powerful Nuxt module for type-safe API queries using TanStack Query (Vue Query
 ## Features
 
 - 🔥 **Type-safe** - Full TypeScript support with generics
-- 🚀 **TanStack Query** - Built on top of TanStack Query for powerful data fetching
-- 🎯 **Composables-first** - Easy-to-use Vue composables
-- 📄 **Pagination** - Built-in pagination and filtering support
-- 🔄 **Optimistic Updates** - Automatic optimistic UI updates for mutations
+- 🚀 **TanStack Query** - Built on TanStack Query for powerful data fetching and caching
+- 🎯 **Composables-first** - Easy-to-use Vue composables for all operations
+- 📄 **Pagination** - Built-in infinite scroll and pagination support
+- 🔄 **Smart Caching** - Automatic cache invalidation with configurable update strategies
 - 🔐 **Authentication** - Optional token-based authentication
+- 🎨 **Flexible Filtering** - Advanced filtering with multiple match modes
 - 📦 **Lightweight** - Minimal dependencies
 
 ## Quick Setup
 
-Install the module to your Nuxt application:
+Install the module:
 
 ```bash
 npx nuxi module add gen-query
@@ -30,25 +31,96 @@ npx nuxi module add gen-query
 
 ## Configuration
 
-Configure the base URL for your API in `nuxt.config.ts`:
+Configure in `nuxt.config.ts`:
 
 ```typescript
 export default defineNuxtConfig({
   modules: ['gen-query'],
   
   genQuery: {
-    baseURL: 'https://api.example.com'
+    baseURL: 'https://api.example.com',  // API base URL
+    cachedPages: 4,                       // Max cached pages for infinite queries
+    update: UpdateStrategy.Invalidate     // Cache update strategy
   }
 })
 ```
 
-Alternatively, use an environment variable:
+### Configuration Options
 
-```bash
-NUXT_PUBLIC_API_BASE_URL=https://api.example.com
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `baseURL` | `string` | `''` | Base URL for all API requests. Can also be set via `NUXT_PUBLIC_API_BASE_URL` env variable |
+| `cachedPages` | `number` | `4` | Maximum number of pages to cache in infinite queries |
+| `update` | `UpdateStrategy` | `Invalidate` | Strategy for updating cache after mutations |
+
+### Update Strategies
+
+The module supports three cache update strategies:
+
+- **`UpdateStrategy.None`** - No automatic cache updates. You manage cache manually.
+- **`UpdateStrategy.Invalidate`** - Invalidates and refetches affected queries after mutations (recommended).
+- **`UpdateStrategy.Optimistic`** - Immediately updates cache optimistically before server confirms.
+
+```typescript
+import { UpdateStrategy } from 'gen-query'
+
+export default defineNuxtConfig({
+  genQuery: {
+    update: UpdateStrategy.Optimistic  // Use optimistic updates
+  }
+})
 ```
 
-## Usage
+## Quick Start
+
+```vue
+<script setup lang="ts">
+import type { Entity } from 'gen-query'
+
+// Define your entity type
+interface Product extends Entity<number> {
+  name: string
+  price: number
+}
+
+// Fetch all products
+const productQuery = useMultipleQuery<Product, number>('products')
+const { data: products, isLoading } = productQuery.read
+
+// Create a new product
+const { mutate: createProduct } = productQuery.create
+createProduct({ name: 'New Product', price: 99.99 })
+</script>
+
+<template>
+  <div v-if="isLoading">Loading...</div>
+  <div v-else>
+    <div v-for="product in products" :key="product.id">
+      {{ product.name }} - ${{ product.price }}
+    </div>
+  </div>
+</template>
+```
+
+## Core Concepts
+
+### Composables
+
+gen-query provides four main composables:
+
+1. **`useLoginService`** - Handle user authentication
+2. **`useSingleQuery`** - CRUD operations for a single entity by ID
+3. **`useMultipleQuery`** - CRUD operations for collections
+4. **`usePaginatedQuery`** - Paginated data with filtering and sorting
+
+All composables return TanStack Query objects with reactive properties for data, loading states, errors, and mutation functions.
+
+### Queries vs Mutations
+
+- **Queries** (`read`, `list`, `page`) - Fetch data with automatic caching and background refetching
+- **Mutations** (`create`, `update`, `del`) - Modify data with automatic cache updates based on your strategy
+
+## Usage Guide
 
 ### Authentication
 
@@ -58,29 +130,42 @@ Use `useLoginService` for user authentication:
 <script setup lang="ts">
 import type { Login, User } from 'gen-query'
 
-const loginService = useLoginService('auth')
+const loginService = useLoginService('auth')  // 'auth' is the resource endpoint
 
 const credentials: Login = {
   username: 'user@example.com',
   password: 'password123'
 }
 
-const { mutate: login, isPending, isError, error } = loginService.login
+const { mutate: login, isPending, isError, error, data: user } = loginService.login
 
 const handleLogin = () => {
   login(credentials, {
     onSuccess: (user: User) => {
       console.log('Logged in:', user.token)
       // Store token for subsequent requests
+      localStorage.setItem('token', user.token)
+    },
+    onError: (error) => {
+      console.error('Login failed:', error.message)
     }
   })
 }
 </script>
+
+<template>
+  <form @submit.prevent="handleLogin">
+    <button type="submit" :disabled="isPending">
+      {{ isPending ? 'Logging in...' : 'Login' }}
+    </button>
+    <div v-if="isError" class="error">{{ error?.message }}</div>
+  </form>
+</template>
 ```
 
-### Fetching a Single Entity
+### Single Entity Operations
 
-Use `useSingleQuery` to fetch a single entity by ID:
+Use `useSingleQuery` to work with a single entity by ID:
 
 ```vue
 <script setup lang="ts">
@@ -90,14 +175,55 @@ interface Product extends Entity<number> {
   name: string
   price: number
   category: string
+  description: string
 }
 
 const productId = ref(1)
-const token = ref('your-auth-token')
+const token = ref(localStorage.getItem('token') || undefined)
 
 const productQuery = useSingleQuery<Product, number>('products', productId, token)
 
-const { data: product, isLoading, isError, error } = productQuery.read
+// Read entity
+const { 
+  data: product, 
+  isLoading, 
+  isError, 
+  error,
+  refetch 
+} = productQuery.read
+
+// Create entity
+const { mutate: createProduct, isPending: isCreating } = productQuery.create
+
+// Update entity
+const { mutate: updateProduct, isPending: isUpdating } = productQuery.update
+
+// Delete entity
+const { mutate: deleteProduct, isPending: isDeleting } = productQuery.del
+
+const handleUpdate = () => {
+  if (!product.value) return
+  
+  updateProduct({
+    ...product.value,
+    price: product.value.price * 0.9  // 10% discount
+  }, {
+    onSuccess: () => {
+      console.log('Product updated!')
+    }
+  })
+}
+
+const handleDelete = () => {
+  if (!product.value) return
+  
+  deleteProduct(product.value, {
+    onSuccess: () => {
+      console.log('Product deleted!')
+      // Navigate away or update UI
+    }
+  })
+}
 </script>
 
 <template>
@@ -105,14 +231,23 @@ const { data: product, isLoading, isError, error } = productQuery.read
   <div v-else-if="isError">Error: {{ error?.message }}</div>
   <div v-else-if="product">
     <h1>{{ product.name }}</h1>
+    <p>{{ product.description }}</p>
     <p>Price: ${{ product.price }}</p>
+    
+    <button @click="handleUpdate" :disabled="isUpdating">
+      {{ isUpdating ? 'Updating...' : 'Apply 10% Discount' }}
+    </button>
+    
+    <button @click="handleDelete" :disabled="isDeleting">
+      {{ isDeleting ? 'Deleting...' : 'Delete Product' }}
+    </button>
   </div>
 </template>
 ```
 
-### Fetching Multiple Entities
+### Collection Operations
 
-Use `useMultipleQuery` for CRUD operations on a collection:
+Use `useMultipleQuery` for CRUD operations on collections:
 
 ```vue
 <script setup lang="ts">
@@ -124,30 +259,93 @@ interface Product extends Entity<number> {
   category: string
 }
 
-const token = ref('your-auth-token')
+const token = ref(localStorage.getItem('token') || undefined)
 const productQuery = useMultipleQuery<Product, number>('products', token)
 
 // Fetch all products
-const { data: products, isLoading, isError, error } = productQuery.list
+const { 
+  data: products, 
+  isLoading, 
+  isError, 
+  error,
+  isFetching,
+  refetch 
+} = productQuery.read
 
-// Create a new product
+// Create mutation
 const { mutate: createProduct, isPending: isCreating } = productQuery.create
-const newProduct = { name: 'New Product', price: 99.99, category: 'electronics' }
-createProduct(newProduct)
 
-// Update a product
+// Update mutation
 const { mutate: updateProduct, isPending: isUpdating } = productQuery.update
-updateProduct({ id: 1, name: 'Updated Product', price: 89.99, category: 'electronics' })
 
-// Delete a product
+// Delete mutation
 const { mutate: deleteProduct, isPending: isDeleting } = productQuery.del
-deleteProduct({ id: 1 })
+
+const newProduct = ref({ name: '', price: 0, category: '' })
+
+const handleCreate = () => {
+  createProduct(newProduct.value, {
+    onSuccess: (created) => {
+      console.log('Created:', created)
+      newProduct.value = { name: '', price: 0, category: '' }
+    }
+  })
+}
+
+const handleUpdate = (product: Product) => {
+  updateProduct({
+    ...product,
+    price: product.price * 1.1  // 10% increase
+  })
+}
+
+const handleDelete = (product: Product) => {
+  if (confirm(`Delete ${product.name}?`)) {
+    deleteProduct(product)
+  }
+}
 </script>
+
+<template>
+  <div>
+    <!-- Create Form -->
+    <form @submit.prevent="handleCreate">
+      <input v-model="newProduct.name" placeholder="Name" required>
+      <input v-model.number="newProduct.price" type="number" placeholder="Price" required>
+      <input v-model="newProduct.category" placeholder="Category" required>
+      <button type="submit" :disabled="isCreating">
+        {{ isCreating ? 'Creating...' : 'Create Product' }}
+      </button>
+    </form>
+
+    <!-- Product List -->
+    <div v-if="isLoading">Loading products...</div>
+    <div v-else-if="isError">Error: {{ error?.message }}</div>
+    <div v-else>
+      <div v-for="product in products" :key="product.id" class="product-card">
+        <h3>{{ product.name }}</h3>
+        <p>Price: ${{ product.price }}</p>
+        <p>Category: {{ product.category }}</p>
+        
+        <button @click="handleUpdate(product)" :disabled="isUpdating">
+          Increase Price 10%
+        </button>
+        <button @click="handleDelete(product)" :disabled="isDeleting">
+          Delete
+        </button>
+      </div>
+      
+      <button @click="refetch()" :disabled="isFetching">
+        {{ isFetching ? 'Refreshing...' : 'Refresh List' }}
+      </button>
+    </div>
+  </div>
+</template>
 ```
 
-### Paginated Queries with Filters
+### Paginated Queries with Filtering
 
-Use `usePaginatedQuery` for paginated data with filtering and sorting:
+Use `usePaginatedQuery` for paginated data with advanced filtering and sorting:
 
 ```vue
 <script setup lang="ts">
@@ -159,77 +357,41 @@ interface Product extends Entity<number> {
   price: number
   category: string
   stock: number
+  createdAt: Date
 }
 
-const token = ref('your-auth-token')
+const token = ref(localStorage.getItem('token') || undefined)
 
 // Configure pagination
 const pageable = new Pageable(
-  0,  // page number (0-indexed)
-  20, // page size
-  [{ property: 'name', direction: 'asc' }] // sorting
+  0,   // page number (0-indexed)
+  20,  // page size
+  [{ property: 'createdAt', direction: 'desc' }]  // sort by newest first
 )
 
 // Configure filters
 const filters = ref(new Filters())
+
+// Filter by price range
 filters.value.price = {
   operator: 'and',
   constraints: [
-    { matchMode: 'gte', value: 100 },
-    { matchMode: 'lte', value: 500 }
+    { matchMode: 'gte', value: 50 },   // price >= 50
+    { matchMode: 'lte', value: 500 }   // price <= 500
   ]
 }
+
+// Filter by category
 filters.value.category = {
   operator: 'and',
   constraints: [{ matchMode: 'eq', value: 'electronics' }]
 }
 
-const productQuery = usePaginatedQuery<Product, number>(
-  'products',
-  pageable,
-  filters,
-  token
-)
-
-const { data: pages, isLoading, isError, error } = productQuery.page
-
-// Access paginated data
-const currentPage = computed(() => pages.value?.pages[0])
-const products = computed(() => currentPage.value?.content ?? [])
-const totalPages = computed(() => currentPage.value?.page.totalPages ?? 0)
-const totalElements = computed(() => currentPage.value?.page.totalElements ?? 0)
-</script>
-
-<template>
-  <div v-if="isLoading">Loading...</div>
-  <div v-else-if="isError">Error: {{ error?.message }}</div>
-  <div v-else>
-    <div v-for="product in products" :key="product.id">
-      <h3>{{ product.name }}</h3>
-      <p>Price: ${{ product.price }}</p>
-    </div>
-    <p>Total: {{ totalElements }} products ({{ totalPages }} pages)</p>
-  </div>
-</template>
-```
-
-### Infinite Scroll
-
-Use the built-in infinite query for infinite scrolling:
-
-```vue
-<script setup lang="ts">
-import { Pageable, Filters } from 'gen-query'
-import type { Entity } from 'gen-query'
-
-interface Product extends Entity<number> {
-  name: string
-  price: number
+// Filter by stock availability
+filters.value.stock = {
+  operator: 'and',
+  constraints: [{ matchMode: 'gt', value: 0 }]  // in stock
 }
-
-const token = ref('your-auth-token')
-const pageable = new Pageable(0, 20)
-const filters = ref(new Filters())
 
 const productQuery = usePaginatedQuery<Product, number>(
   'products',
@@ -240,29 +402,202 @@ const productQuery = usePaginatedQuery<Product, number>(
 
 const {
   data: infiniteData,
+  isLoading,
+  isError,
+  error,
   fetchNextPage,
+  fetchPreviousPage,
   hasNextPage,
-  isFetchingNextPage
-} = productQuery.infinite
+  hasPreviousPage,
+  isFetchingNextPage,
+  isFetchingPreviousPage
+} = productQuery.read
 
-// Get all products from all pages
+// Access paginated data
+const firstPage = computed(() => infiniteData.value?.pages[0])
+const products = computed(() => firstPage.value?.content ?? [])
+const totalPages = computed(() => firstPage.value?.page.totalPages ?? 0)
+const totalElements = computed(() => firstPage.value?.page.totalElements ?? 0)
+const currentPage = computed(() => firstPage.value?.page.number ?? 0)
+
+// Get all products from all loaded pages (for infinite scroll)
 const allProducts = computed(() => 
   infiniteData.value?.pages.flatMap(page => page.content) ?? []
 )
+
+// Update filters dynamically
+const updatePriceFilter = (min: number, max: number) => {
+  filters.value.price = {
+    operator: 'and',
+    constraints: [
+      { matchMode: 'gte', value: min },
+      { matchMode: 'lte', value: max }
+    ]
+  }
+}
+
+const updateCategoryFilter = (category: string) => {
+  if (category) {
+    filters.value.category = {
+      operator: 'and',
+      constraints: [{ matchMode: 'eq', value: category }]
+    }
+  } else {
+    delete filters.value.category
+  }
+}
+
+const searchByName = (searchTerm: string) => {
+  if (searchTerm) {
+    filters.value.name = {
+      operator: 'and',
+      constraints: [{ matchMode: 'contains', value: searchTerm }]
+    }
+  } else {
+    delete filters.value.name
+  }
+}
 </script>
 
 <template>
   <div>
-    <div v-for="product in allProducts" :key="product.id">
-      {{ product.name }}
+    <!-- Filters -->
+    <div class="filters">
+      <input 
+        type="text" 
+        placeholder="Search by name..." 
+        @input="searchByName($event.target.value)"
+      >
+      
+      <select @change="updateCategoryFilter($event.target.value)">
+        <option value="">All Categories</option>
+        <option value="electronics">Electronics</option>
+        <option value="accessories">Accessories</option>
+        <option value="computers">Computers</option>
+      </select>
+      
+      <div>
+        Price: 
+        <input type="number" placeholder="Min" @change="updatePriceFilter($event.target.value, 500)">
+        -
+        <input type="number" placeholder="Max" @change="updatePriceFilter(50, $event.target.value)">
+      </div>
     </div>
-    <button 
-      v-if="hasNextPage" 
-      @click="fetchNextPage()"
-      :disabled="isFetchingNextPage"
-    >
-      {{ isFetchingNextPage ? 'Loading...' : 'Load More' }}
-    </button>
+
+    <!-- Loading State -->
+    <div v-if="isLoading">Loading products...</div>
+    
+    <!-- Error State -->
+    <div v-else-if="isError" class="error">
+      Error: {{ error?.message }}
+    </div>
+    
+    <!-- Product List -->
+    <div v-else>
+      <div class="summary">
+        Showing {{ products.length }} of {{ totalElements }} products
+        (Page {{ currentPage + 1 }} of {{ totalPages }})
+      </div>
+      
+      <div v-for="product in products" :key="product.id" class="product-card">
+        <h3>{{ product.name }}</h3>
+        <p>Price: ${{ product.price }}</p>
+        <p>Category: {{ product.category }}</p>
+        <p>Stock: {{ product.stock }}</p>
+        <p>Added: {{ new Date(product.createdAt).toLocaleDateString() }}</p>
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div class="pagination">
+        <button 
+          @click="fetchPreviousPage()" 
+          :disabled="!hasPreviousPage || isFetchingPreviousPage"
+        >
+          {{ isFetchingPreviousPage ? 'Loading...' : 'Previous Page' }}
+        </button>
+        
+        <button 
+          @click="fetchNextPage()" 
+          :disabled="!hasNextPage || isFetchingNextPage"
+        >
+          {{ isFetchingNextPage ? 'Loading...' : 'Next Page' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+### Infinite Scroll
+
+For infinite scroll, use all loaded pages:
+
+```vue
+<script setup lang="ts">
+import { Pageable, Filters } from 'gen-query'
+import type { Entity } from 'gen-query'
+
+interface Post extends Entity<number> {
+  title: string
+  content: string
+  author: string
+}
+
+const pageable = new Pageable(0, 10)
+const filters = ref(new Filters())
+
+const postQuery = usePaginatedQuery<Post, number>('posts', pageable, filters)
+
+const {
+  data: infiniteData,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  isLoading
+} = postQuery.read
+
+// Get all posts from all loaded pages
+const allPosts = computed(() => 
+  infiniteData.value?.pages.flatMap(page => page.content) ?? []
+)
+
+// Infinite scroll handler
+const handleScroll = () => {
+  const scrollPosition = window.innerHeight + window.scrollY
+  const threshold = document.documentElement.scrollHeight - 100
+  
+  if (scrollPosition >= threshold && hasNextPage.value && !isFetchingNextPage.value) {
+    fetchNextPage()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+</script>
+
+<template>
+  <div>
+    <div v-if="isLoading">Loading...</div>
+    <div v-else>
+      <div v-for="post in allPosts" :key="post.id" class="post">
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.content }}</p>
+        <small>By {{ post.author }}</small>
+      </div>
+      
+      <div v-if="isFetchingNextPage" class="loading">
+        Loading more posts...
+      </div>
+      
+      <div v-else-if="!hasNextPage" class="end">
+        No more posts to load
+      </div>
+    </div>
   </div>
 </template>
 ```
@@ -278,49 +613,59 @@ Creates a login service for authentication.
 **Parameters:**
 - `resource` (optional): API endpoint for login. Default: `'auth'`
 
-**Returns:** Object with:
-- `login`: Mutation object with:
-  - `mutate()`: Function to trigger the login mutation
-  - `isPending`: `true` while the login is in progress
-  - `isError`: `true` if the login failed
-  - `isSuccess`: `true` if the login succeeded
-  - `error`: Error object if the login failed (type `ApiError`)
-  - `data`: User data returned on successful login (type `User`)
-
-**Example:**
+**Returns:**
 ```typescript
-const loginService = useLoginService('auth')
-const { mutate: login, isPending, isError, error } = loginService.login
+{
+  login: {
+    mutate: (credentials: Login, options?) => void
+    isPending: Ref<boolean>
+    isError: Ref<boolean>
+    isSuccess: Ref<boolean>
+    error: Ref<ApiError | null>
+    data: Ref<User | undefined>
+  }
+}
 ```
 
 ---
 
 #### `useSingleQuery<T, K>(resource: string, id: Ref<K>, token?: MaybeRefOrGetter<string | undefined>)`
 
-Fetches a single entity by ID.
+Fetches and manages a single entity by ID.
 
 **Type Parameters:**
 - `T`: Entity type extending `Entity<K>`
-- `K`: ID type
+- `K`: ID type (e.g., `number`, `string`)
 
 **Parameters:**
 - `resource`: API endpoint (e.g., `'products'`)
 - `id`: Reactive reference to entity ID
-- `token` (optional): Authentication token
+- `token` (optional): Authentication token (reactive or getter)
 
-**Returns:** Object with:
-- `read`: Query object with reactive properties:
-  - `data`: The fetched entity data (type `T`)
-  - `error`: Error object if the query failed (type `ApiError`)
-  - `isLoading`: `true` when fetching for the first time
-  - `isError`: `true` if the query encountered an error
-  - `isSuccess`: `true` if the query completed successfully
-  - `isFetching`: `true` when fetching (including background refetches)
-  - `status`: Query status string (`'loading'`, `'error'`, or `'success'`)
-  - `refetch()`: Function to manually refetch the data
-- `create`: Mutation for creating entities
-- `update`: Mutation for updating entities
-- `del`: Mutation for deleting entities
+**Returns:**
+```typescript
+{
+  read: {
+    data: Ref<T | undefined>
+    error: Ref<ApiError | null>
+    isLoading: Ref<boolean>
+    isError: Ref<boolean>
+    isSuccess: Ref<boolean>
+    isFetching: Ref<boolean>
+    status: Ref<'loading' | 'error' | 'success'>
+    refetch: () => Promise<void>
+  },
+  create: {
+    mutate: (entity: T, options?) => void
+    isPending: Ref<boolean>
+    isError: Ref<boolean>
+    isSuccess: Ref<boolean>
+    error: Ref<ApiError | null>
+  },
+  update: { /* same as create */ },
+  del: { /* same as create */ }
+}
+```
 
 ---
 
@@ -336,24 +681,23 @@ Provides CRUD operations for a collection of entities.
 - `resource`: API endpoint
 - `token` (optional): Authentication token
 
-**Returns:** Object with:
-- `list`: Query object with reactive properties:
-  - `data`: Array of fetched entities (type `T[]`)
-  - `error`: Error object if the query failed (type `ApiError`)
-  - `isLoading`: `true` when fetching for the first time
-  - `isError`: `true` if the query encountered an error
-  - `isSuccess`: `true` if the query completed successfully
-  - `isFetching`: `true` when fetching (including background refetches)
-  - `status`: Query status string (`'loading'`, `'error'`, or `'success'`)
-  - `refetch()`: Function to manually refetch the data
-- `create`: Mutation object with:
-  - `mutate()`: Function to trigger the mutation
-  - `isPending`: `true` while the mutation is in progress
-  - `isError`: `true` if the mutation failed
-  - `isSuccess`: `true` if the mutation succeeded
-  - `error`: Error object if the mutation failed
-- `update`: Mutation object (same properties as `create`)
-- `del`: Mutation object (same properties as `create`)
+**Returns:**
+```typescript
+{
+  read: {
+    data: Ref<T[] | undefined>
+    error: Ref<ApiError | null>
+    isLoading: Ref<boolean>
+    isError: Ref<boolean>
+    isSuccess: Ref<boolean>
+    isFetching: Ref<boolean>
+    refetch: () => Promise<void>
+  },
+  create: { /* mutation object */ },
+  update: { /* mutation object */ },
+  del: { /* mutation object */ }
+}
+```
 
 ---
 
@@ -371,24 +715,29 @@ Fetches paginated entities with filtering and sorting.
 - `filters`: Reactive filters
 - `token` (optional): Authentication token
 
-**Returns:** Object with:
-- `page`: Infinite query object with reactive properties:
-  - `data`: Paginated data with pages array (type `{ pages: Page<T>[], pageParams: any[] }`)
-  - `error`: Error object if the query failed (type `ApiError`)
-  - `isLoading`: `true` when fetching the first page
-  - `isError`: `true` if the query encountered an error
-  - `isSuccess`: `true` if the query completed successfully
-  - `isFetching`: `true` when fetching any page
-  - `isFetchingNextPage`: `true` when fetching the next page
-  - `isFetchingPreviousPage`: `true` when fetching the previous page
-  - `hasNextPage`: `true` if there are more pages to fetch
-  - `hasPreviousPage`: `true` if there are previous pages
-  - `fetchNextPage()`: Function to fetch the next page
-  - `fetchPreviousPage()`: Function to fetch the previous page
-  - `refetch()`: Function to refetch all pages
-- `create`: Mutation for creating entities
-- `update`: Mutation for updating entities
-- `del`: Mutation for deleting entities
+**Returns:**
+```typescript
+{
+  read: {
+    data: Ref<InfiniteData<Page<T>> | undefined>
+    error: Ref<ApiError | null>
+    isLoading: Ref<boolean>
+    isError: Ref<boolean>
+    isSuccess: Ref<boolean>
+    isFetching: Ref<boolean>
+    isFetchingNextPage: Ref<boolean>
+    isFetchingPreviousPage: Ref<boolean>
+    hasNextPage: Ref<boolean>
+    hasPreviousPage: Ref<boolean>
+    fetchNextPage: () => Promise<void>
+    fetchPreviousPage: () => Promise<void>
+    refetch: () => Promise<void>
+  },
+  create: { /* mutation object */ },
+  update: { /* mutation object */ },
+  del: { /* mutation object */ }
+}
+```
 
 ---
 
@@ -404,6 +753,16 @@ interface Entity<K> {
 }
 ```
 
+**Example:**
+```typescript
+interface Product extends Entity<number> {
+  name: string
+  price: number
+}
+```
+
+---
+
 #### `Login`
 
 Login credentials.
@@ -414,6 +773,8 @@ type Login = {
   password: string
 }
 ```
+
+---
 
 #### `User`
 
@@ -429,6 +790,8 @@ type User = {
 }
 ```
 
+---
+
 #### `Page<T>`
 
 Paginated response structure.
@@ -436,14 +799,16 @@ Paginated response structure.
 ```typescript
 type Page<T> = {
   page: {
-    number: number
-    size: number
-    totalElements: number
-    totalPages: number
+    number: number        // Current page (0-indexed)
+    size: number          // Items per page
+    totalElements: number // Total items across all pages
+    totalPages: number    // Total number of pages
   }
-  content: T[]
+  content: T[]           // Items in current page
 }
 ```
+
+---
 
 #### `Sort`
 
@@ -451,10 +816,12 @@ Sorting configuration.
 
 ```typescript
 type Sort = {
-  property: string
-  direction: 'asc' | 'desc'
+  property: string           // Field to sort by
+  direction: 'asc' | 'desc' // Sort direction
 }
 ```
+
+---
 
 #### `FilterItem`
 
@@ -462,10 +829,12 @@ Filter configuration.
 
 ```typescript
 type FilterItem = {
-  operator: string
+  operator: string        // 'and' or 'or'
   constraints: Constraint[]
 }
 ```
+
+---
 
 #### `Constraint`
 
@@ -473,8 +842,8 @@ Filter constraint.
 
 ```typescript
 type Constraint = {
-  matchMode: string
-  value: unknown
+  matchMode: string  // eq, ne, lt, lte, gt, gte, contains, startsWith, endsWith, in
+  value: unknown     // Filter value
 }
 ```
 
@@ -500,10 +869,17 @@ class Pageable {
 
 **Example:**
 ```typescript
-const pageable = new Pageable(0, 20, [
-  { property: 'name', direction: 'asc' }
-])
+const pageable = new Pageable(
+  0,   // first page
+  20,  // 20 items per page
+  [
+    { property: 'name', direction: 'asc' },
+    { property: 'price', direction: 'desc' }
+  ]
+)
 ```
+
+---
 
 #### `Filters`
 
@@ -520,6 +896,14 @@ class Filters {
 **Example:**
 ```typescript
 const filters = new Filters()
+
+// Single constraint
+filters.category = {
+  operator: 'and',
+  constraints: [{ matchMode: 'eq', value: 'electronics' }]
+}
+
+// Multiple constraints (AND)
 filters.price = {
   operator: 'and',
   constraints: [
@@ -527,19 +911,45 @@ filters.price = {
     { matchMode: 'lte', value: 500 }
   ]
 }
+
+// Multiple constraints (OR)
+filters.status = {
+  operator: 'or',
+  constraints: [
+    { matchMode: 'eq', value: 'active' },
+    { matchMode: 'eq', value: 'pending' }
+  ]
+}
+
+// String matching
+filters.name = {
+  operator: 'and',
+  constraints: [{ matchMode: 'contains', value: 'laptop' }]
+}
+
+// Date filtering
+filters.createdAt = {
+  operator: 'and',
+  constraints: [{ matchMode: 'gte', value: new Date('2024-01-01') }]
+}
 ```
 
 **Available Match Modes:**
-- `eq` - Equals
-- `ne` - Not equals
-- `lt` - Less than
-- `lte` - Less than or equal
-- `gt` - Greater than
-- `gte` - Greater than or equal
-- `contains` - Contains substring
-- `startsWith` - Starts with
-- `endsWith` - Ends with
-- `in` - In list
+
+| Match Mode | Description | Example |
+|------------|-------------|---------|
+| `eq` | Equals | `{ matchMode: 'eq', value: 'active' }` |
+| `ne` | Not equals | `{ matchMode: 'ne', value: 'deleted' }` |
+| `lt` | Less than | `{ matchMode: 'lt', value: 100 }` |
+| `lte` | Less than or equal | `{ matchMode: 'lte', value: 100 }` |
+| `gt` | Greater than | `{ matchMode: 'gt', value: 50 }` |
+| `gte` | Greater than or equal | `{ matchMode: 'gte', value: 50 }` |
+| `contains` | Contains substring | `{ matchMode: 'contains', value: 'laptop' }` |
+| `startsWith` | Starts with | `{ matchMode: 'startsWith', value: 'Pro' }` |
+| `endsWith` | Ends with | `{ matchMode: 'endsWith', value: 'Pro' }` |
+| `in` | In list | `{ matchMode: 'in', value: 'active,pending' }` |
+
+---
 
 #### `ApiError`
 
@@ -552,50 +962,89 @@ class ApiError extends Error {
   statusCode: number
   status: string
   content?: object
+  stack?: string
 }
 ```
 
-## Backend API Requirements
+**Example:**
+```typescript
+const { error } = productQuery.read
 
-Your backend API should follow the specification detailed in [BACKEND_API.md](/BACKEND_API.md).
+if (error.value) {
+  console.error('Error:', error.value.message)
+  console.error('Status:', error.value.statusCode)
+  console.error('Details:', error.value.content)
+}
+```
 
-Key requirements:
-- RESTful endpoints with JSON
-- Standard CRUD operations
+---
+
+### Enums
+
+#### `UpdateStrategy`
+
+Cache update strategy for mutations.
+
+```typescript
+enum UpdateStrategy {
+  None,        // No automatic cache updates
+  Invalidate,  // Invalidate and refetch (recommended)
+  Optimistic   // Optimistic updates
+}
+```
+
+**Usage:**
+```typescript
+import { UpdateStrategy } from 'gen-query'
+
+export default defineNuxtConfig({
+  genQuery: {
+    update: UpdateStrategy.Optimistic
+  }
+})
+```
+
+## Backend Requirements
+
+Your backend API must follow the REST specification detailed in [BACKEND_API.md](/BACKEND_API.md).
+
+**Key requirements:**
+- RESTful endpoints with JSON request/response
+- Standard CRUD operations (GET, POST, PUT, DELETE)
 - Pagination endpoint with `/page` suffix
-- Filter and sort query parameters
+- Support for filter and sort query parameters
 - Consistent error response format
+- ISO 8601 date format
+- Optional Bearer token authentication
 
 ## Development
 
-<details>
-  <summary>Local development</summary>
-  
-  ```bash
-  # Install dependencies
-  npm install
-  
-  # Generate type stubs
-  npm run dev:prepare
-  
-  # Develop with the playground
-  npm run dev
-  
-  # Build the playground
-  npm run dev:build
-  
-  # Run ESLint
-  npm run lint
-  
-  # Run Vitest
-  npm run test
-  npm run test:watch
-  
-  # Release new version
-  npm run release
-  ```
+```bash
+# Install dependencies
+npm install
 
-</details>
+# Generate type stubs
+npm run dev:prepare
+
+# Develop with playground
+npm run dev
+
+# Build playground
+npm run dev:build
+
+# Run ESLint
+npm run lint
+
+# Run type checking
+npm run test:types
+
+# Run tests
+npm run test
+npm run test:watch
+
+# Release new version
+npm run release
+```
 
 ## License
 
