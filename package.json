@@ -41,11 +41,11 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.2.1",
-    "@tanstack/vue-query": "^5.91.2"
+    "@tanstack/vue-query": "^5.92.0"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^3.1.0",
-    "@nuxt/eslint-config": "^1.10.0",
+    "@nuxt/devtools": "^3.1.1",
+    "@nuxt/eslint-config": "^1.11.0",
     "@nuxt/module-builder": "^1.0.2",
     "@nuxt/schema": "^4.2.1",
     "@nuxt/test-utils": "^3.20.1",
@@ -54,8 +54,8 @@
     "eslint": "^9.39.1",
     "nuxt": "^4.2.1",
     "typescript": "~5.9.3",
-    "vitest": "^4.0.10",
-    "vue-tsc": "^3.1.4"
+    "vitest": "^4.0.15",
+    "vue-tsc": "^3.1.5"
   },
   "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b"
 }
