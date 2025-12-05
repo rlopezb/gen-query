@@ -85,17 +85,15 @@ interface Product extends Entity<number> {
 
 // Fetch all products
 const productQuery = useMultipleQuery<Product, number>('products')
-const { data: products, isLoading } = productQuery.read
 
 // Create a new product
-const { mutate: createProduct } = productQuery.create
-createProduct({ name: 'New Product', price: 99.99 })
+productQuery.create.mutate({ name: 'New Product', price: 99.99 })
 </script>
 
 <template>
-  <div v-if="isLoading">Loading...</div>
+  <div v-if="productQuery.read.isLoading.value">Loading...</div>
   <div v-else>
-    <div v-for="product in products" :key="product.id">
+    <div v-for="product in productQuery.read.data.value" :key="product.id">
       {{ product.name }} - ${{ product.price }}
     </div>
   </div>
@@ -137,10 +135,8 @@ const credentials: Login = {
   password: 'password123'
 }
 
-const { mutate: login, isPending, isError, error, data: user } = loginService.login
-
 const handleLogin = () => {
-  login(credentials, {
+  loginService.login.mutate(credentials, {
     onSuccess: (user: User) => {
       console.log('Logged in:', user.token)
       // Store token for subsequent requests
@@ -155,10 +151,10 @@ const handleLogin = () => {
 
 <template>
   <form @submit.prevent="handleLogin">
-    <button type="submit" :disabled="isPending">
-      {{ isPending ? 'Logging in...' : 'Login' }}
+    <button type="submit" :disabled="loginService.login.isPending.value">
+      {{ loginService.login.isPending.value ? 'Logging in...' : 'Login' }}
     </button>
-    <div v-if="isError" class="error">{{ error?.message }}</div>
+    <div v-if="loginService.login.isError.value" class="error">{{ loginService.login.error.value?.message }}</div>
   </form>
 </template>
 ```
@@ -183,30 +179,12 @@ const token = ref(localStorage.getItem('token') || undefined)
 
 const productQuery = useSingleQuery<Product, number>('products', productId, token)
 
-// Read entity
-const { 
-  data: product, 
-  isLoading, 
-  isError, 
-  error,
-  refetch 
-} = productQuery.read
-
-// Create entity
-const { mutate: createProduct, isPending: isCreating } = productQuery.create
-
-// Update entity
-const { mutate: updateProduct, isPending: isUpdating } = productQuery.update
-
-// Delete entity
-const { mutate: deleteProduct, isPending: isDeleting } = productQuery.del
-
 const handleUpdate = () => {
-  if (!product.value) return
+  if (!productQuery.read.data.value) return
   
-  updateProduct({
-    ...product.value,
-    price: product.value.price * 0.9  // 10% discount
+  productQuery.update.mutate({
+    ...productQuery.read.data.value,
+    price: productQuery.read.data.value.price * 0.9  // 10% discount
   }, {
     onSuccess: () => {
       console.log('Product updated!')
@@ -215,9 +193,9 @@ const handleUpdate = () => {
 }
 
 const handleDelete = () => {
-  if (!product.value) return
+  if (!productQuery.read.data.value) return
   
-  deleteProduct(product.value, {
+  productQuery.del.mutate(productQuery.read.data.value, {
     onSuccess: () => {
       console.log('Product deleted!')
       // Navigate away or update UI
@@ -227,19 +205,19 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <div v-if="isLoading">Loading...</div>
-  <div v-else-if="isError">Error: {{ error?.message }}</div>
-  <div v-else-if="product">
-    <h1>{{ product.name }}</h1>
-    <p>{{ product.description }}</p>
-    <p>Price: ${{ product.price }}</p>
+  <div v-if="productQuery.read.isLoading.value">Loading...</div>
+  <div v-else-if="productQuery.read.isError.value">Error: {{ productQuery.read.error.value?.message }}</div>
+  <div v-else-if="productQuery.read.data.value">
+    <h1>{{ productQuery.read.data.value.name }}</h1>
+    <p>{{ productQuery.read.data.value.description }}</p>
+    <p>Price: ${{ productQuery.read.data.value.price }}</p>
     
-    <button @click="handleUpdate" :disabled="isUpdating">
-      {{ isUpdating ? 'Updating...' : 'Apply 10% Discount' }}
+    <button @click="handleUpdate" :disabled="productQuery.update.isPending.value">
+      {{ productQuery.update.isPending.value ? 'Updating...' : 'Apply 10% Discount' }}
     </button>
     
-    <button @click="handleDelete" :disabled="isDeleting">
-      {{ isDeleting ? 'Deleting...' : 'Delete Product' }}
+    <button @click="handleDelete" :disabled="productQuery.del.isPending.value">
+      {{ productQuery.del.isPending.value ? 'Deleting...' : 'Delete Product' }}
     </button>
   </div>
 </template>
@@ -262,29 +240,10 @@ interface Product extends Entity<number> {
 const token = ref(localStorage.getItem('token') || undefined)
 const productQuery = useMultipleQuery<Product, number>('products', token)
 
-// Fetch all products
-const { 
-  data: products, 
-  isLoading, 
-  isError, 
-  error,
-  isFetching,
-  refetch 
-} = productQuery.read
-
-// Create mutation
-const { mutate: createProduct, isPending: isCreating } = productQuery.create
-
-// Update mutation
-const { mutate: updateProduct, isPending: isUpdating } = productQuery.update
-
-// Delete mutation
-const { mutate: deleteProduct, isPending: isDeleting } = productQuery.del
-
 const newProduct = ref({ name: '', price: 0, category: '' })
 
 const handleCreate = () => {
-  createProduct(newProduct.value, {
+  productQuery.create.mutate(newProduct.value, {
     onSuccess: (created) => {
       console.log('Created:', created)
       newProduct.value = { name: '', price: 0, category: '' }
@@ -293,7 +252,7 @@ const handleCreate = () => {
 }
 
 const handleUpdate = (product: Product) => {
-  updateProduct({
+  productQuery.update.mutate({
     ...product,
     price: product.price * 1.1  // 10% increase
   })
@@ -301,7 +260,7 @@ const handleUpdate = (product: Product) => {
 
 const handleDelete = (product: Product) => {
   if (confirm(`Delete ${product.name}?`)) {
-    deleteProduct(product)
+    productQuery.del.mutate(product)
   }
 }
 </script>
@@ -313,30 +272,30 @@ const handleDelete = (product: Product) => {
       <input v-model="newProduct.name" placeholder="Name" required>
       <input v-model.number="newProduct.price" type="number" placeholder="Price" required>
       <input v-model="newProduct.category" placeholder="Category" required>
-      <button type="submit" :disabled="isCreating">
-        {{ isCreating ? 'Creating...' : 'Create Product' }}
+      <button type="submit" :disabled="productQuery.create.isPending.value">
+        {{ productQuery.create.isPending.value ? 'Creating...' : 'Create Product' }}
       </button>
     </form>
 
     <!-- Product List -->
-    <div v-if="isLoading">Loading products...</div>
-    <div v-else-if="isError">Error: {{ error?.message }}</div>
+    <div v-if="productQuery.read.isLoading.value">Loading products...</div>
+    <div v-else-if="productQuery.read.isError.value">Error: {{ productQuery.read.error.value?.message }}</div>
     <div v-else>
-      <div v-for="product in products" :key="product.id" class="product-card">
+      <div v-for="product in productQuery.read.data.value" :key="product.id" class="product-card">
         <h3>{{ product.name }}</h3>
         <p>Price: ${{ product.price }}</p>
         <p>Category: {{ product.category }}</p>
         
-        <button @click="handleUpdate(product)" :disabled="isUpdating">
+        <button @click="handleUpdate(product)" :disabled="productQuery.update.isPending.value">
           Increase Price 10%
         </button>
-        <button @click="handleDelete(product)" :disabled="isDeleting">
+        <button @click="handleDelete(product)" :disabled="productQuery.del.isPending.value">
           Delete
         </button>
       </div>
       
-      <button @click="refetch()" :disabled="isFetching">
-        {{ isFetching ? 'Refreshing...' : 'Refresh List' }}
+      <button @click="productQuery.read.refetch()" :disabled="productQuery.read.isFetching.value">
+        {{ productQuery.read.isFetching.value ? 'Refreshing...' : 'Refresh List' }}
       </button>
     </div>
   </div>
@@ -400,21 +359,8 @@ const productQuery = usePaginatedQuery<Product, number>(
   token
 )
 
-const {
-  data: infiniteData,
-  isLoading,
-  isError,
-  error,
-  fetchNextPage,
-  fetchPreviousPage,
-  hasNextPage,
-  hasPreviousPage,
-  isFetchingNextPage,
-  isFetchingPreviousPage
-} = productQuery.read
-
 // Access paginated data
-const firstPage = computed(() => infiniteData.value?.pages[0])
+const firstPage = computed(() => productQuery.read.data.value?.pages[0])
 const products = computed(() => firstPage.value?.content ?? [])
 const totalPages = computed(() => firstPage.value?.page.totalPages ?? 0)
 const totalElements = computed(() => firstPage.value?.page.totalElements ?? 0)
@@ -422,7 +368,7 @@ const currentPage = computed(() => firstPage.value?.page.number ?? 0)
 
 // Get all products from all loaded pages (for infinite scroll)
 const allProducts = computed(() => 
-  infiniteData.value?.pages.flatMap(page => page.content) ?? []
+  productQuery.read.data.value?.pages.flatMap(page => page.content) ?? []
 )
 
 // Update filters dynamically
@@ -485,11 +431,11 @@ const searchByName = (searchTerm: string) => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading">Loading products...</div>
+    <div v-if="productQuery.read.isLoading.value">Loading products...</div>
     
     <!-- Error State -->
-    <div v-else-if="isError" class="error">
-      Error: {{ error?.message }}
+    <div v-else-if="productQuery.read.isError.value" class="error">
+      Error: {{ productQuery.read.error.value?.message }}
     </div>
     
     <!-- Product List -->
@@ -510,17 +456,17 @@ const searchByName = (searchTerm: string) => {
       <!-- Pagination Controls -->
       <div class="pagination">
         <button 
-          @click="fetchPreviousPage()" 
-          :disabled="!hasPreviousPage || isFetchingPreviousPage"
+          @click="productQuery.read.fetchPreviousPage()" 
+          :disabled="!productQuery.read.hasPreviousPage.value || productQuery.read.isFetchingPreviousPage.value"
         >
-          {{ isFetchingPreviousPage ? 'Loading...' : 'Previous Page' }}
+          {{ productQuery.read.isFetchingPreviousPage.value ? 'Loading...' : 'Previous Page' }}
         </button>
         
         <button 
-          @click="fetchNextPage()" 
-          :disabled="!hasNextPage || isFetchingNextPage"
+          @click="productQuery.read.fetchNextPage()" 
+          :disabled="!productQuery.read.hasNextPage.value || productQuery.read.isFetchingNextPage.value"
         >
-          {{ isFetchingNextPage ? 'Loading...' : 'Next Page' }}
+          {{ productQuery.read.isFetchingNextPage.value ? 'Loading...' : 'Next Page' }}
         </button>
       </div>
     </div>
@@ -548,17 +494,9 @@ const filters = ref(new Filters())
 
 const postQuery = usePaginatedQuery<Post, number>('posts', pageable, filters)
 
-const {
-  data: infiniteData,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-  isLoading
-} = postQuery.read
-
 // Get all posts from all loaded pages
 const allPosts = computed(() => 
-  infiniteData.value?.pages.flatMap(page => page.content) ?? []
+  postQuery.read.data.value?.pages.flatMap(page => page.content) ?? []
 )
 
 // Infinite scroll handler
@@ -566,8 +504,8 @@ const handleScroll = () => {
   const scrollPosition = window.innerHeight + window.scrollY
   const threshold = document.documentElement.scrollHeight - 100
   
-  if (scrollPosition >= threshold && hasNextPage.value && !isFetchingNextPage.value) {
-    fetchNextPage()
+  if (scrollPosition >= threshold && postQuery.read.hasNextPage.value && !postQuery.read.isFetchingNextPage.value) {
+    postQuery.read.fetchNextPage()
   }
 }
 
@@ -582,7 +520,7 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <div v-if="isLoading">Loading...</div>
+    <div v-if="postQuery.read.isLoading.value">Loading...</div>
     <div v-else>
       <div v-for="post in allPosts" :key="post.id" class="post">
         <h2>{{ post.title }}</h2>
@@ -590,11 +528,11 @@ onUnmounted(() => {
         <small>By {{ post.author }}</small>
       </div>
       
-      <div v-if="isFetchingNextPage" class="loading">
+      <div v-if="postQuery.read.isFetchingNextPage.value" class="loading">
         Loading more posts...
       </div>
       
-      <div v-else-if="!hasNextPage" class="end">
+      <div v-else-if="!postQuery.read.hasNextPage.value" class="end">
         No more posts to load
       </div>
     </div>

@@ -241,6 +241,7 @@ export class PaginatedQuery<T extends Entity<K>, K> {
       },
     })
 
+    const config = useRuntimeConfig().public.genQuery
     this.read = useInfiniteQuery({
       initialPageParam: { pageable: this.pageable },
       queryKey: this.queryKey,
@@ -265,7 +266,7 @@ export class PaginatedQuery<T extends Entity<K>, K> {
           ),
         }
       },
-      maxPages: 4,
+      maxPages: config.cachedPages,
       placeholderData: keepPreviousData,
     })
 
