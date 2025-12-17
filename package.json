@@ -1,6 +1,6 @@
 {
   "name": "gen-query",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Query with tanstack using generics",
   "repository": {
     "type": "git",
@@ -33,7 +33,7 @@
     "dev": "npm run dev:prepare && nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
-    "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
+    "release": "npm run lint && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",

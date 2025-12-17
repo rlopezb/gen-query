@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.7.3
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.2...v1.7.3)
+
+### 🏡 Chore
+
+- Update various dependencies to their latest patch and minor versions. ([75440c1](https://github.com/rlopezb/gen-query/commit/75440c1))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.7.2
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.1...v1.7.2)
