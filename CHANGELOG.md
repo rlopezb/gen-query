@@ -1,6 +1,10 @@
 # Changelog
 
 
+## v1.7.4
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.3...v1.7.4)
+
 ## v1.7.3
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.2...v1.7.3)
