@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.7.6
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.5...v1.7.6)
+
+### 💅 Refactors
+
+- Unify filter syntax to consistently use colon `:` as a separator and update documentation accordingly. ([b2e2af3](https://github.com/rlopezb/gen-query/commit/b2e2af3))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.7.5
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.4...v1.7.5)
