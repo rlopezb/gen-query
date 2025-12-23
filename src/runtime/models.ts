@@ -115,16 +115,9 @@ export class Filters {
       const constraints = filterItem.constraints.filter(c => c.value)
       if (constraints.length === 0) continue
 
-      if (constraints.length > 1) {
-        const conditions = constraints.map(c => `${field}:${c.matchMode}:${c.value}`)
-        const separator = filterItem.operator === 'and' ? '&' : '|'
-        params.push(`filter=${encodeURIComponent(conditions.join(separator))}`)
-      }
-      else {
-        const { matchMode, value } = constraints[0]!
-        const formattedValue = value instanceof Date ? formatDate(value.toISOString()) : value
-        params.push(`filter=${encodeURIComponent(`${field}‚${matchMode}‚${formattedValue}`)}`)
-      }
+      const conditions = constraints.map(c => `${field}:${c.matchMode}:${c.value instanceof Date ? formatDate(c.value.toISOString()) : c.value}`)
+      const separator = filterItem.operator === 'and' ? '&' : '|'
+      params.push(`filter=${encodeURIComponent(conditions.join(separator))}`)
     }
 
     return params.join('&')

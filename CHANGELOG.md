@@ -5,6 +5,14 @@
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.4...v1.7.5)
 
+### 💅 Refactors
+
+- Simplify `Filters.toQueryParams()` to use uniform logic for both single and multiple constraints, improving code maintainability.
+
+### 📖 Documentation
+
+- **BREAKING:** Update filter syntax documentation to reflect that colon `:` is now the consistent separator for all filter expressions (previously used Unicode character `‚` for some cases).
+
 ## v1.7.4
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.3...v1.7.4)

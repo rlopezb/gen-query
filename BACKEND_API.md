@@ -372,7 +372,7 @@ Authorization: Bearer {token}  # Optional
 
 **Example:** 
 ```
-GET /products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚100
+GET /products/page?size=20&page=0&sort=name,asc&filter=price:gte:100
 ```
 
 **Request Headers:**
@@ -388,7 +388,7 @@ Authorization: Bearer {token}  # Optional
 | `size` | integer | Yes | Number of items per page | `size=20` |
 | `page` | integer | Yes | Page number (0-indexed) | `page=0` |
 | `sort` | string | No | Field and direction (comma-separated) | `sort=name,asc` |
-| `filter` | string | No | Filter expression | `filter=price‚gte‚100` |
+| `filter` | string | No | Filter expression | `filter=price:gte:100` |
 
 **Success Response (200 OK):**
 ```json
@@ -437,13 +437,13 @@ The `page` object contains pagination metadata:
 
 ### Single Filter
 
-**Format:** `field‚matchMode‚value`
+**Format:** `field:matchMode:value`
 
-The separator is the Unicode character `‚` (U+201A, single low-9 quotation mark).
+The separator is the colon character `:`.
 
 **Example:**
 ```
-filter=price‚gte‚100
+filter=price:gte:100
 ```
 
 **Meaning:** Price greater than or equal to 100
@@ -453,7 +453,7 @@ filter=price‚gte‚100
 Use multiple `filter` parameters:
 
 ```
-filter=category‚eq‚electronics&filter=price‚gte‚100&filter=price‚lte‚500
+filter=category:eq:electronics&filter=price:gte:100&filter=price:lte:500
 ```
 
 **Meaning:** Category equals "electronics" AND price >= 100 AND price <= 500
@@ -468,29 +468,30 @@ filter=category:eq:electronics|category:eq:computers
 
 **Meaning:** Category equals "electronics" OR category equals "computers"
 
-> **Note:** When using OR logic, the separator changes from `‚` to `:` and values are separated by `|`.
+> **Note:** The separator between field, matchMode, and value is always `:`. The pipe `|` is used to separate multiple conditions within the same filter parameter for OR logic.
+
 
 ### Match Modes
 
 | Match Mode | Description | Example | SQL Equivalent |
 |------------|-------------|---------|----------------|
-| `eq` | Equals | `status‚eq‚active` | `WHERE status = 'active'` |
-| `ne` | Not equals | `status‚ne‚deleted` | `WHERE status != 'deleted'` |
-| `lt` | Less than | `price‚lt‚100` | `WHERE price < 100` |
-| `lte` | Less than or equal | `price‚lte‚100` | `WHERE price <= 100` |
-| `gt` | Greater than | `price‚gt‚50` | `WHERE price > 50` |
-| `gte` | Greater than or equal | `price‚gte‚50` | `WHERE price >= 50` |
-| `contains` | Contains substring (case-insensitive) | `name‚contains‚laptop` | `WHERE LOWER(name) LIKE '%laptop%'` |
-| `startsWith` | Starts with | `name‚startsWith‚Pro` | `WHERE name LIKE 'Pro%'` |
-| `endsWith` | Ends with | `name‚endsWith‚Pro` | `WHERE name LIKE '%Pro'` |
-| `in` | In list (comma-separated) | `status‚in‚active,pending` | `WHERE status IN ('active', 'pending')` |
+| `eq` | Equals | `status:eq:active` | `WHERE status = 'active'` |
+| `ne` | Not equals | `status:ne:deleted` | `WHERE status != 'deleted'` |
+| `lt` | Less than | `price:lt:100` | `WHERE price < 100` |
+| `lte` | Less than or equal | `price:lte:100` | `WHERE price <= 100` |
+| `gt` | Greater than | `price:gt:50` | `WHERE price > 50` |
+| `gte` | Greater than or equal | `price:gte:50` | `WHERE price >= 50` |
+| `contains` | Contains substring (case-insensitive) | `name:contains:laptop` | `WHERE LOWER(name) LIKE '%laptop%'` |
+| `startsWith` | Starts with | `name:startsWith:Pro` | `WHERE name LIKE 'Pro%'` |
+| `endsWith` | Ends with | `name:endsWith:Pro` | `WHERE name LIKE '%Pro'` |
+| `in` | In list (comma-separated) | `status:in:active,pending` | `WHERE status IN ('active', 'pending')` |
 
 ### Date Filters
 
 Dates should be sent as ISO 8601 strings:
 
 ```
-filter=createdAt‚gte‚2024-01-01T00:00:00Z
+filter=createdAt:gte:2024-01-01T00:00:00Z
 ```
 
 The backend should parse ISO 8601 date strings and compare them appropriately.
@@ -499,7 +500,7 @@ The backend should parse ISO 8601 date strings and compare them appropriately.
 
 **Example 1:** Products priced between $100 and $500
 ```
-filter=price‚gte‚100&filter=price‚lte‚500
+filter=price:gte:100&filter=price:lte:500
 ```
 
 **Example 2:** Electronics or computers category
@@ -509,12 +510,12 @@ filter=category:eq:electronics|category:eq:computers
 
 **Example 3:** Name contains "laptop" and in stock
 ```
-filter=name‚contains‚laptop&filter=stock‚gt‚0
+filter=name:contains:laptop&filter=stock:gt:0
 ```
 
 **Example 4:** Created in 2024 and price > $50
 ```
-filter=createdAt‚gte‚2024-01-01T00:00:00Z&filter=createdAt‚lt‚2025-01-01T00:00:00Z&filter=price‚gt‚50
+filter=createdAt:gte:2024-01-01T00:00:00Z&filter=createdAt:lt:2025-01-01T00:00:00Z&filter=price:gt:50
 ```
 
 ---
@@ -697,7 +698,7 @@ curl -X DELETE https://api.example.com/products \
   -d '{"id":10}'
 
 # 7. Paginated list with filters
-curl "https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=price‚gte‚50&filter=category‚eq‚electronics" \
+curl "https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=price:gte:50&filter=category:eq:electronics" \
   -H "Authorization: Bearer eyJhbG..."
 ```
 
@@ -709,7 +710,7 @@ curl "https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=
 
 **URL:**
 ```
-GET /products/page?size=20&page=0&sort=price,desc&filter=category‚eq‚electronics&filter=price‚gte‚100&filter=price‚lte‚500
+GET /products/page?size=20&page=0&sort=price,desc&filter=category:eq:electronics&filter=price:gte:100&filter=price:lte:500
 ```
 
 **Backend SQL (pseudo-code):**
@@ -730,7 +731,7 @@ LIMIT 20 OFFSET 0
 
 **URL:**
 ```
-GET /products/page?size=20&page=0&filter=name:contains:laptop|name:contains:computer&filter=stock‚gt‚0
+GET /products/page?size=20&page=0&filter=name:contains:laptop|name:contains:computer&filter=stock:gt:0
 ```
 
 **Backend SQL (pseudo-code):**
@@ -749,7 +750,7 @@ LIMIT 20 OFFSET 0
 
 **URL:**
 ```
-GET /products/page?size=20&page=0&filter=createdAt‚gte‚2024-01-01T00:00:00Z&filter=createdAt‚lt‚2024-02-01T00:00:00Z
+GET /products/page?size=20&page=0&filter=createdAt:gte:2024-01-01T00:00:00Z&filter=createdAt:lt:2024-02-01T00:00:00Z
 ```
 
 **Backend SQL (pseudo-code):**
@@ -799,7 +800,7 @@ curl -X GET "https://api.example.com/products/page?size=10&page=0"
 curl -X GET "https://api.example.com/products/page?size=10&page=0&sort=name,asc"
 
 # Test filtering
-curl -X GET "https://api.example.com/products/page?size=10&page=0&filter=price‚gte‚100"
+curl -X GET "https://api.example.com/products/page?size=10&page=0&filter=price:gte:100"
 
 # Test create
 curl -X POST "https://api.example.com/products" \
