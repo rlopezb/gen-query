@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.7.7
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.6...v1.7.7)
+
+### 🏡 Chore
+
+- Migrate package manager configuration from .npmrc to .pnpmrc. ([fcaf900](https://github.com/rlopezb/gen-query/commit/fcaf900))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.7.6
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.5...v1.7.6)
