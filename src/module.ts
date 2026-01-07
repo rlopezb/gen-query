@@ -22,7 +22,8 @@ export default defineNuxtModule<ModuleOptions>({
   },
 
   setup(options, nuxt) {
-    nuxt.options.runtimeConfig.public.genQuery = defu((nuxt.options.runtimeConfig.public as any).genQuery ?? {}, {
+    const publicConfig = nuxt.options.runtimeConfig.public as { genQuery?: { baseURL?: string, cachedPages?: number, update?: UpdateStrategy } }
+    nuxt.options.runtimeConfig.public.genQuery = defu(publicConfig.genQuery ?? {}, {
       baseURL: options.baseURL,
       cachedPages: options.cachedPages,
       update: options.update,
