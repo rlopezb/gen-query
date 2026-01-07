@@ -5,6 +5,14 @@ import { type Filters, Pageable, type ApiError } from './models'
 import { UpdateStrategy, type Entity, type Page } from './types'
 import { useRuntimeConfig } from '#app'
 
+type GenQueryConfig = {
+  baseURL?: string
+  cachedPages?: number
+  update?: UpdateStrategy
+}
+
+const getConfig = () => useRuntimeConfig().public.genQuery as GenQueryConfig
+
 /**
  * Query class for fetching a single entity by ID.
  */
@@ -30,7 +38,7 @@ export class SingleQuery<T extends Entity<K>, K> {
     this.create = useMutation({
       mutationFn: (entity: T) => this.service.create(entity),
       onMutate: async (createdEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -56,7 +64,7 @@ export class SingleQuery<T extends Entity<K>, K> {
     this.update = useMutation({
       mutationFn: (entity: T) => this.service.update(entity),
       onMutate: async (updatedEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -76,7 +84,7 @@ export class SingleQuery<T extends Entity<K>, K> {
     this.del = useMutation({
       mutationFn: (entity: T) => this.service.delete(entity),
       onMutate: async () => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -118,7 +126,7 @@ export class MultipleQuery<T extends Entity<K>, K> {
     this.create = useMutation({
       mutationFn: (entity: T) => this.service.create(entity),
       onMutate: async (createdEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -146,7 +154,7 @@ export class MultipleQuery<T extends Entity<K>, K> {
     this.update = useMutation({
       mutationFn: (entity: T) => this.service.update(entity),
       onMutate: async (updatedEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -168,7 +176,7 @@ export class MultipleQuery<T extends Entity<K>, K> {
     this.del = useMutation({
       mutationFn: (entity: T) => this.service.delete(entity),
       onMutate: async (deletedEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -216,7 +224,7 @@ export class PaginatedQuery<T extends Entity<K>, K> {
     this.create = useMutation({
       mutationFn: (entity: T) => this.service.create(entity),
       onMutate: async (createdEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -241,7 +249,7 @@ export class PaginatedQuery<T extends Entity<K>, K> {
       },
     })
 
-    const config = useRuntimeConfig().public.genQuery
+    const config = getConfig()
     this.read = useInfiniteQuery({
       initialPageParam: { pageable: this.pageable },
       queryKey: this.queryKey,
@@ -273,7 +281,7 @@ export class PaginatedQuery<T extends Entity<K>, K> {
     this.update = useMutation({
       mutationFn: (entity: T) => this.service.update(entity),
       onMutate: async (updatedEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
@@ -305,7 +313,7 @@ export class PaginatedQuery<T extends Entity<K>, K> {
     this.del = useMutation({
       mutationFn: (entity: T) => this.service.delete(entity),
       onMutate: async (deletedEntity: T) => {
-        const config = useRuntimeConfig().public.genQuery
+        const config = getConfig()
         switch (config.update) {
           case UpdateStrategy.None:
             break
