@@ -22,7 +22,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
 
   setup(options, nuxt) {
-    nuxt.options.runtimeConfig.public.genQuery = defu(nuxt.options.runtimeConfig.public.genQuery, {
+    nuxt.options.runtimeConfig.public.genQuery = defu((nuxt.options.runtimeConfig.public as any).genQuery ?? {}, {
       baseURL: options.baseURL,
       cachedPages: options.cachedPages,
       update: options.update,
