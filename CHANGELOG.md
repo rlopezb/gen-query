@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.8.0
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.7...v1.8.0)
+
+### 🚀 Enhancements
+
+- **proxy:** Implement login handling and user session management ([ec8fcd2](https://github.com/rlopezb/gen-query/commit/ec8fcd2))
+- Add HTTPS agent configuration for secure requests ([3f2b2c6](https://github.com/rlopezb/gen-query/commit/3f2b2c6))
+- **playground:** Add auth/login, users/page and demo/run endpoints to exercise LoginService and paged queries ([3415d82](https://github.com/rlopezb/gen-query/commit/3415d82))
+- **playground:** Initialize playground with login functionality and basic layout ([1a88768](https://github.com/rlopezb/gen-query/commit/1a88768))
+- **playground:** Add defu dependency and refactor login service composables ([f1abe72](https://github.com/rlopezb/gen-query/commit/f1abe72))
+- Add `genQuery` baseURL configuration and remove `node:https` agent with `rejectUnauthorized: false`. ([376faee](https://github.com/rlopezb/gen-query/commit/376faee))
+
+### 💅 Refactors
+
+- Unify server and client composables ([5a6a871](https://github.com/rlopezb/gen-query/commit/5a6a871))
+
+### 🏡 Chore
+
+- **deps): update dev deps; feat(playground): add minimal no-UI playground; fix(types:** Type runtime config in queries and module ([ba2032c](https://github.com/rlopezb/gen-query/commit/ba2032c))
+- Fix lint and types; add unbuild devDependency; add playground build ([fe2538e](https://github.com/rlopezb/gen-query/commit/fe2538e))
+- **playground:** Remove unused playground files and configurations ([9c536f3](https://github.com/rlopezb/gen-query/commit/9c536f3))
+- Initialize playground with package.json for Nuxt 4 and Vue 3 ([b2ea097](https://github.com/rlopezb/gen-query/commit/b2ea097))
+- **playground:** Update API endpoint and code formatting ([dce0a11](https://github.com/rlopezb/gen-query/commit/dce0a11))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+- Rlopezb ([@rlopezb](https://github.com/rlopezb))
+
 ## v1.7.7
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.6...v1.7.7)
