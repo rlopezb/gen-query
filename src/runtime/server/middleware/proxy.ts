@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, setCookie, getCookie, proxyRequest } from 'h3'
 import type { Login, User } from '../../types'
-import { useLoginService } from '../../composables/useLoginService.server'
+import { useLoginService } from '../../composables/useLoginService'
 
 export default defineEventHandler(async (event) => {
   if (event.path.endsWith('/login')) {

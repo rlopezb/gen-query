@@ -3,7 +3,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import type { Pageable, Filters } from './models'
 import { handleDates } from './models'
 import type { Login, User, Page } from './types'
-import { useQueryFetch } from './composables/useQueryFetch.server'
+import { useQueryFetch } from './composables/useQueryFetch'
 
 /**
  * Service for handling user authentication.

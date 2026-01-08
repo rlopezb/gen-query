@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "#imports";
-import { useLoginService } from "../../src/runtime/composables/useLoginService.server";
+import { useLoginService } from "../../src/runtime/composables/useLoginService";
 
 const username = ref("");
 const password = ref("");

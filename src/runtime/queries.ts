@@ -64,6 +64,11 @@ export class SingleQuery<T extends Entity<K>, K> {
       },
     })
 
+    this.queryClient.prefetchQuery({
+      queryKey: this.queryKey,
+      queryFn: () => this.service.read(this.id.value),
+    })
+
     this.read = useQuery({
       queryKey: this.queryKey,
       queryFn: () => this.service.read(this.id.value),
@@ -153,6 +158,11 @@ export class MultipleQuery<T extends Entity<K>, K> {
             break
         }
       },
+    })
+
+    this.queryClient.prefetchQuery({
+      queryKey: this.queryKey,
+      queryFn: () => this.service.list(),
     })
 
     this.read = useQuery({
@@ -275,6 +285,14 @@ export class PaginatedQuery<T extends Entity<K>, K> {
     })
 
     const config = getConfig()
+
+    this.queryClient.prefetchInfiniteQuery({
+      initialPageParam: { pageable: this.pageable },
+      queryKey: this.queryKey,
+      queryFn: ({ pageParam }: { pageParam: { pageable: Pageable } }) =>
+        this.service.page(pageParam.pageable, this.filters.value),
+    })
+
     this.read = useInfiniteQuery({
       initialPageParam: { pageable: this.pageable },
       queryKey: this.queryKey,
