@@ -1,5 +1,14 @@
 import type { Ref, MaybeRefOrGetter } from 'vue'
-import { keepPreviousData, useMutation, useQueryClient, type QueryClient, useQuery, useInfiniteQuery, type UseInfiniteQueryReturnType, type InfiniteData } from '@tanstack/vue-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+  useQuery,
+  useInfiniteQuery,
+  type UseInfiniteQueryReturnType,
+  type InfiniteData,
+} from '@tanstack/vue-query'
 import { Service } from './services'
 import { type Filters, Pageable, type ApiError } from './models'
 import { UpdateStrategy, type Entity, type Page } from './types'
@@ -136,7 +145,8 @@ export class MultipleQuery<T extends Entity<K>, K> {
           case UpdateStrategy.Optimistic: {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
             const previousData: T[] | undefined = this.queryClient.getQueryData<T[]>(this.queryKey)
-            if (previousData) this.queryClient.setQueryData(this.queryKey, [...previousData, createdEntity])
+            if (previousData)
+              this.queryClient.setQueryData(this.queryKey, [...previousData, createdEntity])
             break
           }
           default:
@@ -164,7 +174,11 @@ export class MultipleQuery<T extends Entity<K>, K> {
           case UpdateStrategy.Optimistic: {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
             const previousData: T[] | undefined = this.queryClient.getQueryData<T[]>(this.queryKey)
-            if (previousData) this.queryClient.setQueryData(this.queryKey, previousData.map(e => e.id === updatedEntity.id ? updatedEntity : e))
+            if (previousData)
+              this.queryClient.setQueryData(
+                this.queryKey,
+                previousData.map((e) => (e.id === updatedEntity.id ? updatedEntity : e))
+              )
             break
           }
           default:
@@ -186,7 +200,11 @@ export class MultipleQuery<T extends Entity<K>, K> {
           case UpdateStrategy.Optimistic: {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
             const previousData: T[] | undefined = this.queryClient.getQueryData<T[]>(this.queryKey)
-            if (previousData) this.queryClient.setQueryData(this.queryKey, previousData.filter(e => e.id !== deletedEntity.id))
+            if (previousData)
+              this.queryClient.setQueryData(
+                this.queryKey,
+                previousData.filter((e) => e.id !== deletedEntity.id)
+              )
             break
           }
           default:
@@ -213,7 +231,12 @@ export class PaginatedQuery<T extends Entity<K>, K> {
   public update
   public del
 
-  constructor(resource: string, pageable: Pageable, filters: Ref<Filters>, token?: MaybeRefOrGetter<string | undefined>) {
+  constructor(
+    resource: string,
+    pageable: Pageable,
+    filters: Ref<Filters>,
+    token?: MaybeRefOrGetter<string | undefined>
+  ) {
     this.resource = resource
     this.queryClient = useQueryClient()
     this.service = new Service<T, K>(resource, token)
@@ -233,14 +256,16 @@ export class PaginatedQuery<T extends Entity<K>, K> {
             break
           case UpdateStrategy.Optimistic: {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
-            const previousData: InfiniteData<Page<T>> | undefined = this.queryClient.getQueryData(this.queryKey)
-            if (previousData) this.queryClient.setQueryData(
-              this.queryKey,
-              {
-                ...previousData,
-                pages: previousData.pages.map((page: Page<T>, index: number) => index === 0 ? { ...page, content: [createdEntity, ...page.content] } : page),
-              },
+            const previousData: InfiniteData<Page<T>> | undefined = this.queryClient.getQueryData(
+              this.queryKey
             )
+            if (previousData)
+              this.queryClient.setQueryData(this.queryKey, {
+                ...previousData,
+                pages: previousData.pages.map((page: Page<T>, index: number) =>
+                  index === 0 ? { ...page, content: [createdEntity, ...page.content] } : page
+                ),
+              })
             break
           }
           default:
@@ -253,24 +278,33 @@ export class PaginatedQuery<T extends Entity<K>, K> {
     this.read = useInfiniteQuery({
       initialPageParam: { pageable: this.pageable },
       queryKey: this.queryKey,
-      queryFn: ({ pageParam }: { pageParam: { pageable: Pageable } }) => this.service.page(pageParam.pageable, this.filters.value),
-      getNextPageParam: (lastPage: Page<T>, _: Page<T>[], lastPageParam: { pageable: Pageable }) => {
+      queryFn: ({ pageParam }: { pageParam: { pageable: Pageable } }) =>
+        this.service.page(pageParam.pageable, this.filters.value),
+      getNextPageParam: (
+        lastPage: Page<T>,
+        _: Page<T>[],
+        lastPageParam: { pageable: Pageable }
+      ) => {
         if (lastPage.page.number >= lastPage.page.totalPages - 1) return undefined
         return {
           pageable: new Pageable(
             lastPageParam.pageable.page + 1,
             lastPageParam.pageable.size,
-            lastPageParam.pageable.sort,
+            lastPageParam.pageable.sort
           ),
         }
       },
-      getPreviousPageParam: (firstPage: Page<T>, _: Page<T>[], firstPageParam: { pageable: Pageable }) => {
+      getPreviousPageParam: (
+        firstPage: Page<T>,
+        _: Page<T>[],
+        firstPageParam: { pageable: Pageable }
+      ) => {
         if (firstPage.page.number === 0) return undefined
         return {
           pageable: new Pageable(
             firstPageParam.pageable.page - 1,
             firstPageParam.pageable.size,
-            firstPageParam.pageable.sort,
+            firstPageParam.pageable.sort
           ),
         }
       },
@@ -290,17 +324,21 @@ export class PaginatedQuery<T extends Entity<K>, K> {
             break
           case UpdateStrategy.Optimistic: {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
-            const previousData: InfiniteData<Page<T>> | undefined = this.queryClient.getQueryData(this.queryKey)
-            if (previousData) this.queryClient.setQueryData(
-              this.queryKey,
-              {
+            const previousData: InfiniteData<Page<T>> | undefined = this.queryClient.getQueryData(
+              this.queryKey
+            )
+            if (previousData)
+              this.queryClient.setQueryData(this.queryKey, {
                 ...previousData,
                 pages: previousData.pages.map((page: Page<T>) => ({
                   ...page,
-                  content: page.content.map((oldEntity: T) => oldEntity.id === updatedEntity.id ? { ...oldEntity, ...updatedEntity } : oldEntity),
+                  content: page.content.map((oldEntity: T) =>
+                    oldEntity.id === updatedEntity.id
+                      ? { ...oldEntity, ...updatedEntity }
+                      : oldEntity
+                  ),
                 })),
-              },
-            )
+              })
 
             break
           }
@@ -322,17 +360,17 @@ export class PaginatedQuery<T extends Entity<K>, K> {
             break
           case UpdateStrategy.Optimistic: {
             await this.queryClient.cancelQueries({ queryKey: this.queryKey })
-            const previousData: InfiniteData<Page<T>> | undefined = this.queryClient.getQueryData(this.queryKey)
-            if (previousData) this.queryClient.setQueryData(
-              this.queryKey,
-              {
+            const previousData: InfiniteData<Page<T>> | undefined = this.queryClient.getQueryData(
+              this.queryKey
+            )
+            if (previousData)
+              this.queryClient.setQueryData(this.queryKey, {
                 ...previousData,
                 pages: previousData.pages.map((page: Page<T>) => ({
                   ...page,
                   content: page.content.filter((oldEntity: T) => oldEntity.id !== deletedEntity.id),
                 })),
-              },
-            )
+              })
             break
           }
           default:

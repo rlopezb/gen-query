@@ -1,0 +1,13 @@
+# Ignore artifacts:
+node_modules
+dist
+.build
+.nuxt
+coverage
+
+# Ignore lock files
+pnpm-lock.yaml
+
+# Ignore editor files
+.vscode
+.DS_Store

@@ -13,10 +13,11 @@ export default defineEventHandler(async (event) => {
       secure: true,
       sameSite: 'strict',
     })
-  }
-  else {
+  } else {
     const userCookie = getCookie(event, 'user')
-    const token = userCookie ? JSON.parse(Buffer.from(userCookie, 'base64').toString('utf-8')).token : null
+    const token = userCookie
+      ? JSON.parse(Buffer.from(userCookie, 'base64').toString('utf-8')).token
+      : null
     return proxyRequest(event, event.path, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

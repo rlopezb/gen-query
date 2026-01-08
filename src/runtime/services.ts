@@ -24,7 +24,10 @@ export class LoginService {
    * @returns The logged-in user.
    */
   public login = async (login: Login): Promise<User> => {
-    const response = await this.fetch.raw<User>(this.resource + '/login', { method: 'POST', body: JSON.stringify(login) })
+    const response = await this.fetch.raw<User>(this.resource + '/login', {
+      method: 'POST',
+      body: JSON.stringify(login),
+    })
     return response._data as User
   }
 }
@@ -41,11 +44,17 @@ export class Service<T, K> {
    * @param resource The resource endpoint.
    * @param token Optional authentication token.
    */
-  constructor(protected resource: string, token?: MaybeRefOrGetter<string | undefined>) {
+  constructor(
+    protected resource: string,
+    token?: MaybeRefOrGetter<string | undefined>
+  ) {
     this.fetch = useQueryFetch<T>({ token })
   }
 
-  private call = async <T>(request: NitroFetchRequest, opts?: NitroFetchOptions<NitroFetchRequest>): Promise<T> => {
+  private call = async <T>(
+    request: NitroFetchRequest,
+    opts?: NitroFetchOptions<NitroFetchRequest>
+  ): Promise<T> => {
     const response = await this.fetch.raw<T>(request, opts)
     return handleDates(response._data as T) as T
   }
@@ -65,10 +74,7 @@ export class Service<T, K> {
    * @returns A page of entities.
    */
   public page = (pageable: Pageable, filters: Filters): Promise<Page<T>> => {
-    const query = [
-      pageable.toQueryParams(),
-      filters.toQueryParams(),
-    ].filter(Boolean).join('&')
+    const query = [pageable.toQueryParams(), filters.toQueryParams()].filter(Boolean).join('&')
     return this.call<Page<T>>(`${this.resource}/page?${query}`, { method: 'GET' })
   }
 

@@ -1,6 +1,5 @@
 # Changelog
 
-
 ## v1.7.7
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.6...v1.7.7)
@@ -121,7 +120,6 @@
 
 ## v1.3.0
 
-
 ### 🚀 Enhancements
 
 - **module:** Add gen-query Nuxt module with composables for queries and services ([3d1d402](https://github.com/rlopezb/gen-query/commit/3d1d402))
@@ -168,4 +166,3 @@
 
 - Rafael López Benavente <rlopezb@gmail.com>
 - Ad8a353 <Rafael López Benavente>
-

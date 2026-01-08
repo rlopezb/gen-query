@@ -1,9 +1,12 @@
 export default defineNuxtConfig({
-  compatibilityDate: '2024-04-03',
+  extends: ['plugin:vue/vue3-recommended', '@nuxtjs/eslint-config', '@vue/eslint-config-prettier'],
+  modules: ['../src/module'],
   devtools: {
     enabled: true,
   },
-  modules: [
-    '../src/module',
-  ],
+  compatibilityDate: '2024-04-03',
+  genQuery: {
+    baseURL: 'https://api.example.com',
+    cachedPages: 4,
+  },
 })

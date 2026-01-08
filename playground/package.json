@@ -1,0 +1,18 @@
+{
+  "name": "gen-query-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxi build",
+    "dev": "nuxi dev",
+    "generate": "nuxi generate",
+    "preview": "nuxi preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.0",
+    "nuxt": "^4.2.2"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^3.1.1"
+  }
+}

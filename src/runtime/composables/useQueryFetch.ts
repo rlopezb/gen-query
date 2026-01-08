@@ -17,7 +17,8 @@ export interface QueryFetchOptions extends FetchOptions {
  * Reduces code duplication across error handlers.
  */
 const createApiError = (response?: unknown, error?: Error): ApiError => {
-  const { data = {}, status = -1 } = (response as { data?: Record<string, unknown>, status?: number }) || {}
+  const { data = {}, status = -1 } =
+    (response as { data?: Record<string, unknown>; status?: number }) || {}
 
   return new ApiError(
     (data.message as string) || error?.message || 'Unknown Error',
@@ -27,7 +28,7 @@ const createApiError = (response?: unknown, error?: Error): ApiError => {
     (data.statusCode as number) || status,
     (data.status as string) || 'error',
     (data.content as object) || {},
-    data.cause || error?.cause,
+    data.cause || error?.cause
   )
 }
 
@@ -40,14 +41,12 @@ export const useQueryFetch = <T>(options?: QueryFetchOptions): $Fetch<T> => {
   const config = useRuntimeConfig().public.genQuery as { baseURL?: string }
 
   if (!config?.baseURL) {
-    throw new Error(
-      'gen-query: baseURL is not configured. Please add it to your nuxt.config.ts:\n'
-      + 'export default defineNuxtConfig({\n'
-      + '  genQuery: {\n'
-      + '    baseURL: "http://your-api-url"\n'
-      + '  }\n'
-      + '})',
-    )
+    throw new Error(`gen-query: baseURL is not configured. Please add it to your nuxt.config.ts:
+export default defineNuxtConfig({
+  genQuery: {
+    baseURL: "http://your-api-url"
+  }
+})`)
   }
 
   const { baseURL } = config
