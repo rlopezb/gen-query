@@ -1,9 +1,9 @@
 import type { $Fetch, NitroFetchOptions, NitroFetchRequest } from 'nitropack'
 import type { MaybeRefOrGetter } from 'vue'
-import { useQueryFetch } from './composables/useQueryFetch'
 import type { Pageable, Filters } from './models'
 import { handleDates } from './models'
 import type { Login, User, Page } from './types'
+import { useQueryFetch } from './composables/useQueryFetch.server'
 
 /**
  * Service for handling user authentication.

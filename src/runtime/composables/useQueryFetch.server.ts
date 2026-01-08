@@ -1,4 +1,3 @@
-import https from 'node:https'
 import type { FetchOptions } from 'ofetch'
 import type { $Fetch } from 'nitropack'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
@@ -57,14 +56,10 @@ export default defineNuxtConfig({
     headers.append('Content-Type', 'application/json')
     return headers
   })
-  const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-  })
 
   return $fetch.create<T>({
     ...options,
     baseURL,
-    agent: httpsAgent,
     headers: headers.value,
     onRequest({ options: fetchOptions }) {
       if (options?.token) {
