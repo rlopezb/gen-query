@@ -7,6 +7,9 @@ import type { Entity } from '../types'
  * @param resource The resource endpoint.
  * @param token Optional authentication token.
  */
-export const useMultipleQuery = <T extends Entity<K>, K>(resource: string, token?: MaybeRefOrGetter<string | undefined>) => {
+export const useMultipleQuery = <T extends Entity<K>, K>(
+  resource: string,
+  token?: MaybeRefOrGetter<string | undefined>
+) => {
   return new MultipleQuery<T, K>(resource, token)
 }

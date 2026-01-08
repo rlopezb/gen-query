@@ -8,6 +8,10 @@ import type { Entity } from '../types'
  * @param id The ID of the entity.
  * @param token Optional authentication token.
  */
-export const useSingleQuery = <T extends Entity<K>, K>(resource: string, id: Ref<K>, token?: MaybeRefOrGetter<string | undefined>) => {
+export const useSingleQuery = <T extends Entity<K>, K>(
+  resource: string,
+  id: Ref<K>,
+  token?: MaybeRefOrGetter<string | undefined>
+) => {
   return new SingleQuery<T, K>(resource, id, token)
 }

@@ -40,6 +40,7 @@ genQuery: {
 ```
 
 For a resource named `products`, endpoints will be:
+
 ```
 https://api.example.com/products
 ```
@@ -48,15 +49,15 @@ https://api.example.com/products
 
 ## Quick Reference
 
-| Method | Endpoint | Purpose | Request Body | Response |
-|--------|----------|---------|--------------|----------|
-| POST | `/{resource}/login` | Authenticate user | `Login` | `User` |
-| GET | `/{resource}` | List all entities | - | `T[]` |
-| GET | `/{resource}/{id}` | Read single entity | - | `T` |
-| POST | `/{resource}` | Create entity | `T` | `T` |
-| PUT | `/{resource}` | Update entity | `T` | `T` |
-| DELETE | `/{resource}` | Delete entity | `T` | `T` |
-| GET | `/{resource}/page` | Paginated list | - | `Page<T>` |
+| Method | Endpoint            | Purpose            | Request Body | Response  |
+| ------ | ------------------- | ------------------ | ------------ | --------- |
+| POST   | `/{resource}/login` | Authenticate user  | `Login`      | `User`    |
+| GET    | `/{resource}`       | List all entities  | -            | `T[]`     |
+| GET    | `/{resource}/{id}`  | Read single entity | -            | `T`       |
+| POST   | `/{resource}`       | Create entity      | `T`          | `T`       |
+| PUT    | `/{resource}`       | Update entity      | `T`          | `T`       |
+| DELETE | `/{resource}`       | Delete entity      | `T`          | `T`       |
+| GET    | `/{resource}/page`  | Paginated list     | -            | `Page<T>` |
 
 ---
 
@@ -69,12 +70,14 @@ https://api.example.com/products
 **Example:** `POST /auth/login`
 
 **Request Headers:**
+
 ```http
 Content-Type: application/json
 Accept: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "username": "user@example.com",
@@ -83,6 +86,7 @@ Accept: application/json
 ```
 
 **Success Response (200 OK):**
+
 ```json
 {
   "username": "user@example.com",
@@ -93,6 +97,7 @@ Accept: application/json
 ```
 
 **Error Response (401 Unauthorized):**
+
 ```json
 {
   "message": "Invalid credentials",
@@ -122,12 +127,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Example:** `GET /products`
 
 **Request Headers:**
+
 ```http
 Accept: application/json
 Authorization: Bearer {token}  # Optional
 ```
 
 **Success Response (200 OK):**
+
 ```json
 [
   {
@@ -160,12 +167,14 @@ Authorization: Bearer {token}  # Optional
 **Example:** `GET /products/1`
 
 **Request Headers:**
+
 ```http
 Accept: application/json
 Authorization: Bearer {token}  # Optional
 ```
 
 **Success Response (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -185,6 +194,7 @@ Authorization: Bearer {token}  # Optional
 ```
 
 **Error Response (404 Not Found):**
+
 ```json
 {
   "message": "Product with id 1 not found",
@@ -204,6 +214,7 @@ Authorization: Bearer {token}  # Optional
 **Example:** `POST /products`
 
 **Request Headers:**
+
 ```http
 Content-Type: application/json
 Accept: application/json
@@ -211,6 +222,7 @@ Authorization: Bearer {token}  # Optional
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "Mechanical Keyboard",
@@ -224,6 +236,7 @@ Authorization: Bearer {token}  # Optional
 > **Note:** The `id` field should NOT be included in the request body. The server generates it.
 
 **Success Response (201 Created):**
+
 ```json
 {
   "id": 3,
@@ -238,6 +251,7 @@ Authorization: Bearer {token}  # Optional
 ```
 
 **Error Response (400 Bad Request):**
+
 ```json
 {
   "message": "Validation failed",
@@ -269,6 +283,7 @@ Authorization: Bearer {token}  # Optional
 **Example:** `PUT /products`
 
 **Request Headers:**
+
 ```http
 Content-Type: application/json
 Accept: application/json
@@ -276,6 +291,7 @@ Authorization: Bearer {token}  # Optional
 ```
 
 **Request Body:**
+
 ```json
 {
   "id": 1,
@@ -290,6 +306,7 @@ Authorization: Bearer {token}  # Optional
 > **Important:** The `id` field MUST be included to identify which entity to update.
 
 **Success Response (200 OK):**
+
 ```json
 {
   "id": 1,
@@ -304,6 +321,7 @@ Authorization: Bearer {token}  # Optional
 ```
 
 **Error Response (404 Not Found):**
+
 ```json
 {
   "message": "Product with id 1 not found",
@@ -323,6 +341,7 @@ Authorization: Bearer {token}  # Optional
 **Example:** `DELETE /products`
 
 **Request Headers:**
+
 ```http
 Content-Type: application/json
 Accept: application/json
@@ -330,6 +349,7 @@ Authorization: Bearer {token}  # Optional
 ```
 
 **Request Body:**
+
 ```json
 {
   "id": 3
@@ -339,6 +359,7 @@ Authorization: Bearer {token}  # Optional
 > **Important:** The `id` field MUST be included to identify which entity to delete.
 
 **Success Response (200 OK):**
+
 ```json
 {
   "id": 3,
@@ -352,6 +373,7 @@ Authorization: Bearer {token}  # Optional
 > **Alternative:** Some APIs prefer soft deletes and return the full entity with a `deletedAt` timestamp instead of a `deleted` boolean.
 
 **Error Response (404 Not Found):**
+
 ```json
 {
   "message": "Product with id 3 not found",
@@ -370,12 +392,14 @@ Authorization: Bearer {token}  # Optional
 
 **Endpoint:** `GET /{resource}/page?{queryParams}`
 
-**Example:** 
+**Example:**
+
 ```
 GET /products/page?size=20&page=0&sort=name,asc&filter=price:gte:100
 ```
 
 **Request Headers:**
+
 ```http
 Accept: application/json
 Authorization: Bearer {token}  # Optional
@@ -383,14 +407,15 @@ Authorization: Bearer {token}  # Optional
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description | Example |
-|-----------|------|----------|-------------|---------|
-| `size` | integer | Yes | Number of items per page | `size=20` |
-| `page` | integer | Yes | Page number (0-indexed) | `page=0` |
-| `sort` | string | No | Field and direction (comma-separated) | `sort=name,asc` |
-| `filter` | string | No | Filter expression | `filter=price:gte:100` |
+| Parameter | Type    | Required | Description                           | Example                |
+| --------- | ------- | -------- | ------------------------------------- | ---------------------- |
+| `size`    | integer | Yes      | Number of items per page              | `size=20`              |
+| `page`    | integer | Yes      | Page number (0-indexed)               | `page=0`               |
+| `sort`    | string  | No       | Field and direction (comma-separated) | `sort=name,asc`        |
+| `filter`  | string  | No       | Filter expression                     | `filter=price:gte:100` |
 
 **Success Response (200 OK):**
+
 ```json
 {
   "page": {
@@ -424,12 +449,12 @@ Authorization: Bearer {token}  # Optional
 
 The `page` object contains pagination metadata:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `number` | integer | Current page number (0-indexed) |
-| `size` | integer | Number of items per page |
+| Field           | Type    | Description                            |
+| --------------- | ------- | -------------------------------------- |
+| `number`        | integer | Current page number (0-indexed)        |
+| `size`          | integer | Number of items per page               |
 | `totalElements` | integer | Total number of items across all pages |
-| `totalPages` | integer | Total number of pages |
+| `totalPages`    | integer | Total number of pages                  |
 
 ---
 
@@ -442,6 +467,7 @@ The `page` object contains pagination metadata:
 The separator is the colon character `:`.
 
 **Example:**
+
 ```
 filter=price:gte:100
 ```
@@ -470,21 +496,20 @@ filter=category:eq:electronics|category:eq:computers
 
 > **Note:** The separator between field, matchMode, and value is always `:`. The pipe `|` is used to separate multiple conditions within the same filter parameter for OR logic.
 
-
 ### Match Modes
 
-| Match Mode | Description | Example | SQL Equivalent |
-|------------|-------------|---------|----------------|
-| `eq` | Equals | `status:eq:active` | `WHERE status = 'active'` |
-| `ne` | Not equals | `status:ne:deleted` | `WHERE status != 'deleted'` |
-| `lt` | Less than | `price:lt:100` | `WHERE price < 100` |
-| `lte` | Less than or equal | `price:lte:100` | `WHERE price <= 100` |
-| `gt` | Greater than | `price:gt:50` | `WHERE price > 50` |
-| `gte` | Greater than or equal | `price:gte:50` | `WHERE price >= 50` |
-| `contains` | Contains substring (case-insensitive) | `name:contains:laptop` | `WHERE LOWER(name) LIKE '%laptop%'` |
-| `startsWith` | Starts with | `name:startsWith:Pro` | `WHERE name LIKE 'Pro%'` |
-| `endsWith` | Ends with | `name:endsWith:Pro` | `WHERE name LIKE '%Pro'` |
-| `in` | In list (comma-separated) | `status:in:active,pending` | `WHERE status IN ('active', 'pending')` |
+| Match Mode   | Description                           | Example                    | SQL Equivalent                          |
+| ------------ | ------------------------------------- | -------------------------- | --------------------------------------- |
+| `eq`         | Equals                                | `status:eq:active`         | `WHERE status = 'active'`               |
+| `ne`         | Not equals                            | `status:ne:deleted`        | `WHERE status != 'deleted'`             |
+| `lt`         | Less than                             | `price:lt:100`             | `WHERE price < 100`                     |
+| `lte`        | Less than or equal                    | `price:lte:100`            | `WHERE price <= 100`                    |
+| `gt`         | Greater than                          | `price:gt:50`              | `WHERE price > 50`                      |
+| `gte`        | Greater than or equal                 | `price:gte:50`             | `WHERE price >= 50`                     |
+| `contains`   | Contains substring (case-insensitive) | `name:contains:laptop`     | `WHERE LOWER(name) LIKE '%laptop%'`     |
+| `startsWith` | Starts with                           | `name:startsWith:Pro`      | `WHERE name LIKE 'Pro%'`                |
+| `endsWith`   | Ends with                             | `name:endsWith:Pro`        | `WHERE name LIKE '%Pro'`                |
+| `in`         | In list (comma-separated)             | `status:in:active,pending` | `WHERE status IN ('active', 'pending')` |
 
 ### Date Filters
 
@@ -499,21 +524,25 @@ The backend should parse ISO 8601 date strings and compare them appropriately.
 ### Complex Filter Examples
 
 **Example 1:** Products priced between $100 and $500
+
 ```
 filter=price:gte:100&filter=price:lte:500
 ```
 
 **Example 2:** Electronics or computers category
+
 ```
 filter=category:eq:electronics|category:eq:computers
 ```
 
 **Example 3:** Name contains "laptop" and in stock
+
 ```
 filter=name:contains:laptop&filter=stock:gt:0
 ```
 
 **Example 4:** Created in 2024 and price > $50
+
 ```
 filter=createdAt:gte:2024-01-01T00:00:00Z&filter=createdAt:lt:2025-01-01T00:00:00Z&filter=price:gt:50
 ```
@@ -527,11 +556,13 @@ filter=createdAt:gte:2024-01-01T00:00:00Z&filter=createdAt:lt:2025-01-01T00:00:0
 **Format:** `sort=field,direction`
 
 **Example:**
+
 ```
 sort=name,asc
 ```
 
 **Directions:**
+
 - `asc` - Ascending order (A-Z, 0-9, oldest-newest)
 - `desc` - Descending order (Z-A, 9-0, newest-oldest)
 
@@ -546,6 +577,7 @@ sort=category,asc&sort=price,desc
 **Meaning:** Sort by category ascending, then by price descending within each category.
 
 **Example URL:**
+
 ```
 GET /products/page?size=20&page=0&sort=category,asc&sort=price,desc
 ```
@@ -574,20 +606,21 @@ All errors MUST follow this format:
 
 ### HTTP Status Codes
 
-| Code | Name | When to Use |
-|------|------|-------------|
-| 200 | OK | Successful GET, PUT, DELETE |
-| 201 | Created | Successful POST (entity created) |
-| 400 | Bad Request | Invalid request data, validation errors |
-| 401 | Unauthorized | Missing or invalid authentication |
-| 403 | Forbidden | Authenticated but not authorized |
-| 404 | Not Found | Entity not found |
-| 422 | Unprocessable Entity | Business logic validation failed |
-| 500 | Internal Server Error | Unexpected server error |
+| Code | Name                  | When to Use                             |
+| ---- | --------------------- | --------------------------------------- |
+| 200  | OK                    | Successful GET, PUT, DELETE             |
+| 201  | Created               | Successful POST (entity created)        |
+| 400  | Bad Request           | Invalid request data, validation errors |
+| 401  | Unauthorized          | Missing or invalid authentication       |
+| 403  | Forbidden             | Authenticated but not authorized        |
+| 404  | Not Found             | Entity not found                        |
+| 422  | Unprocessable Entity  | Business logic validation failed        |
+| 500  | Internal Server Error | Unexpected server error                 |
 
 ### Error Examples
 
 **Validation Error (400):**
+
 ```json
 {
   "message": "Validation failed",
@@ -611,6 +644,7 @@ All errors MUST follow this format:
 ```
 
 **Authentication Error (401):**
+
 ```json
 {
   "message": "Authentication required",
@@ -622,6 +656,7 @@ All errors MUST follow this format:
 ```
 
 **Authorization Error (403):**
+
 ```json
 {
   "message": "You do not have permission to perform this action",
@@ -633,6 +668,7 @@ All errors MUST follow this format:
 ```
 
 **Not Found Error (404):**
+
 ```json
 {
   "message": "Product with id 999 not found",
@@ -644,6 +680,7 @@ All errors MUST follow this format:
 ```
 
 **Server Error (500):**
+
 ```json
 {
   "message": "An unexpected error occurred",
@@ -709,11 +746,13 @@ curl "https://api.example.com/products/page?size=20&page=0&sort=name,asc&filter=
 **Scenario:** Get electronics products priced between $100 and $500, sorted by price descending
 
 **URL:**
+
 ```
 GET /products/page?size=20&page=0&sort=price,desc&filter=category:eq:electronics&filter=price:gte:100&filter=price:lte:500
 ```
 
 **Backend SQL (pseudo-code):**
+
 ```sql
 SELECT * FROM products
 WHERE category = 'electronics'
@@ -730,11 +769,13 @@ LIMIT 20 OFFSET 0
 **Scenario:** Search for products with "laptop" OR "computer" in name, in stock
 
 **URL:**
+
 ```
 GET /products/page?size=20&page=0&filter=name:contains:laptop|name:contains:computer&filter=stock:gt:0
 ```
 
 **Backend SQL (pseudo-code):**
+
 ```sql
 SELECT * FROM products
 WHERE (LOWER(name) LIKE '%laptop%' OR LOWER(name) LIKE '%computer%')
@@ -749,11 +790,13 @@ LIMIT 20 OFFSET 0
 **Scenario:** Products created in January 2024
 
 **URL:**
+
 ```
 GET /products/page?size=20&page=0&filter=createdAt:gte:2024-01-01T00:00:00Z&filter=createdAt:lt:2024-02-01T00:00:00Z
 ```
 
 **Backend SQL (pseudo-code):**
+
 ```sql
 SELECT * FROM products
 WHERE createdAt >= '2024-01-01T00:00:00Z'
@@ -824,49 +867,44 @@ Create a simple Nuxt app to test your API:
 
 ```vue
 <script setup lang="ts">
-import { Pageable, Filters } from 'gen-query'
-import type { Entity } from 'gen-query'
+  import { Pageable, Filters } from 'gen-query'
+  import type { Entity } from 'gen-query'
 
-interface Product extends Entity<number> {
-  name: string
-  price: number
-  category: string
-}
+  interface Product extends Entity<number> {
+    name: string
+    price: number
+    category: string
+  }
 
-const token = ref('your-auth-token')
+  const token = ref('your-auth-token')
 
-// Test list
-const productQuery = useMultipleQuery<Product, number>('products', token)
-const { data: products } = productQuery.read
+  // Test list
+  const productQuery = useMultipleQuery<Product, number>('products', token)
+  const { data: products } = productQuery.read
 
-// Test create
-const { mutate: createProduct } = productQuery.create
-createProduct({ name: 'Test Product', price: 99.99, category: 'test' })
+  // Test create
+  const { mutate: createProduct } = productQuery.create
+  createProduct({ name: 'Test Product', price: 99.99, category: 'test' })
 
-// Test update
-const { mutate: updateProduct } = productQuery.update
-updateProduct({ id: 1, name: 'Updated Product', price: 89.99, category: 'test' })
+  // Test update
+  const { mutate: updateProduct } = productQuery.update
+  updateProduct({ id: 1, name: 'Updated Product', price: 89.99, category: 'test' })
 
-// Test delete
-const { mutate: deleteProduct } = productQuery.del
-deleteProduct({ id: 1 })
+  // Test delete
+  const { mutate: deleteProduct } = productQuery.del
+  deleteProduct({ id: 1 })
 
-// Test pagination with filters
-const pageable = new Pageable(0, 20, [{ property: 'name', direction: 'asc' }])
-const filters = ref(new Filters())
-filters.value.price = {
-  operator: 'and',
-  constraints: [{ matchMode: 'gte', value: 50 }]
-}
+  // Test pagination with filters
+  const pageable = new Pageable(0, 20, [{ property: 'name', direction: 'asc' }])
+  const filters = ref(new Filters())
+  filters.value.price = {
+    operator: 'and',
+    constraints: [{ matchMode: 'gte', value: 50 }],
+  }
 
-const paginatedQuery = usePaginatedQuery<Product, number>(
-  'products',
-  pageable,
-  filters,
-  token
-)
+  const paginatedQuery = usePaginatedQuery<Product, number>('products', pageable, filters, token)
 
-const { data: page } = paginatedQuery.read
+  const { data: page } = paginatedQuery.read
 </script>
 ```
 

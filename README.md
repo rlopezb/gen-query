@@ -36,22 +36,22 @@ Configure in `nuxt.config.ts`:
 ```typescript
 export default defineNuxtConfig({
   modules: ['gen-query'],
-  
+
   genQuery: {
-    baseURL: 'https://api.example.com',  // API base URL
-    cachedPages: 4,                       // Max cached pages for infinite queries
-    update: UpdateStrategy.Invalidate     // Cache update strategy
-  }
+    baseURL: 'https://api.example.com', // API base URL
+    cachedPages: 4, // Max cached pages for infinite queries
+    update: UpdateStrategy.Invalidate, // Cache update strategy
+  },
 })
 ```
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `baseURL` | `string` | `''` | Base URL for all API requests. Can also be set via `NUXT_PUBLIC_API_BASE_URL` env variable |
-| `cachedPages` | `number` | `4` | Maximum number of pages to cache in infinite queries |
-| `update` | `UpdateStrategy` | `Invalidate` | Strategy for updating cache after mutations |
+| Option        | Type             | Default      | Description                                                                                |
+| ------------- | ---------------- | ------------ | ------------------------------------------------------------------------------------------ |
+| `baseURL`     | `string`         | `''`         | Base URL for all API requests. Can also be set via `NUXT_PUBLIC_API_BASE_URL` env variable |
+| `cachedPages` | `number`         | `4`          | Maximum number of pages to cache in infinite queries                                       |
+| `update`      | `UpdateStrategy` | `Invalidate` | Strategy for updating cache after mutations                                                |
 
 ### Update Strategies
 
@@ -66,8 +66,8 @@ import { UpdateStrategy } from 'gen-query'
 
 export default defineNuxtConfig({
   genQuery: {
-    update: UpdateStrategy.Optimistic  // Use optimistic updates
-  }
+    update: UpdateStrategy.Optimistic, // Use optimistic updates
+  },
 })
 ```
 
@@ -75,19 +75,19 @@ export default defineNuxtConfig({
 
 ```vue
 <script setup lang="ts">
-import type { Entity } from 'gen-query'
+  import type { Entity } from 'gen-query'
 
-// Define your entity type
-interface Product extends Entity<number> {
-  name: string
-  price: number
-}
+  // Define your entity type
+  interface Product extends Entity<number> {
+    name: string
+    price: number
+  }
 
-// Fetch all products
-const productQuery = useMultipleQuery<Product, number>('products')
+  // Fetch all products
+  const productQuery = useMultipleQuery<Product, number>('products')
 
-// Create a new product
-productQuery.create.mutate({ name: 'New Product', price: 99.99 })
+  // Create a new product
+  productQuery.create.mutate({ name: 'New Product', price: 99.99 })
 </script>
 
 <template>
@@ -126,27 +126,27 @@ Use `useLoginService` for user authentication:
 
 ```vue
 <script setup lang="ts">
-import type { Login, User } from 'gen-query'
+  import type { Login, User } from 'gen-query'
 
-const loginService = useLoginService('auth')  // 'auth' is the resource endpoint
+  const loginService = useLoginService('auth') // 'auth' is the resource endpoint
 
-const credentials: Login = {
-  username: 'user@example.com',
-  password: 'password123'
-}
+  const credentials: Login = {
+    username: 'user@example.com',
+    password: 'password123',
+  }
 
-const handleLogin = () => {
-  loginService.login.mutate(credentials, {
-    onSuccess: (user: User) => {
-      console.log('Logged in:', user.token)
-      // Store token for subsequent requests
-      localStorage.setItem('token', user.token)
-    },
-    onError: (error) => {
-      console.error('Login failed:', error.message)
-    }
-  })
-}
+  const handleLogin = () => {
+    loginService.login.mutate(credentials, {
+      onSuccess: (user: User) => {
+        console.log('Logged in:', user.token)
+        // Store token for subsequent requests
+        localStorage.setItem('token', user.token)
+      },
+      onError: (error) => {
+        console.error('Login failed:', error.message)
+      },
+    })
+  }
 </script>
 
 <template>
@@ -154,7 +154,9 @@ const handleLogin = () => {
     <button type="submit" :disabled="loginService.login.isPending.value">
       {{ loginService.login.isPending.value ? 'Logging in...' : 'Login' }}
     </button>
-    <div v-if="loginService.login.isError.value" class="error">{{ loginService.login.error.value?.message }}</div>
+    <div v-if="loginService.login.isError.value" class="error">
+      {{ loginService.login.error.value?.message }}
+    </div>
   </form>
 </template>
 ```
@@ -165,57 +167,62 @@ Use `useSingleQuery` to work with a single entity by ID:
 
 ```vue
 <script setup lang="ts">
-import type { Entity } from 'gen-query'
+  import type { Entity } from 'gen-query'
 
-interface Product extends Entity<number> {
-  name: string
-  price: number
-  category: string
-  description: string
-}
+  interface Product extends Entity<number> {
+    name: string
+    price: number
+    category: string
+    description: string
+  }
 
-const productId = ref(1)
-const token = ref(localStorage.getItem('token') || undefined)
+  const productId = ref(1)
+  const token = ref(localStorage.getItem('token') || undefined)
 
-const productQuery = useSingleQuery<Product, number>('products', productId, token)
+  const productQuery = useSingleQuery<Product, number>('products', productId, token)
 
-const handleUpdate = () => {
-  if (!productQuery.read.data.value) return
-  
-  productQuery.update.mutate({
-    ...productQuery.read.data.value,
-    price: productQuery.read.data.value.price * 0.9  // 10% discount
-  }, {
-    onSuccess: () => {
-      console.log('Product updated!')
-    }
-  })
-}
+  const handleUpdate = () => {
+    if (!productQuery.read.data.value) return
 
-const handleDelete = () => {
-  if (!productQuery.read.data.value) return
-  
-  productQuery.del.mutate(productQuery.read.data.value, {
-    onSuccess: () => {
-      console.log('Product deleted!')
-      // Navigate away or update UI
-    }
-  })
-}
+    productQuery.update.mutate(
+      {
+        ...productQuery.read.data.value,
+        price: productQuery.read.data.value.price * 0.9, // 10% discount
+      },
+      {
+        onSuccess: () => {
+          console.log('Product updated!')
+        },
+      }
+    )
+  }
+
+  const handleDelete = () => {
+    if (!productQuery.read.data.value) return
+
+    productQuery.del.mutate(productQuery.read.data.value, {
+      onSuccess: () => {
+        console.log('Product deleted!')
+        // Navigate away or update UI
+      },
+    })
+  }
 </script>
 
 <template>
   <div v-if="productQuery.read.isLoading.value">Loading...</div>
-  <div v-else-if="productQuery.read.isError.value">Error: {{ productQuery.read.error.value?.message }}</div>
+  <div v-else-if="productQuery.read.isError.value">
+    Error: {{ productQuery.read.error.value?.message }}
+  </div>
   <div v-else-if="productQuery.read.data.value">
     <h1>{{ productQuery.read.data.value.name }}</h1>
     <p>{{ productQuery.read.data.value.description }}</p>
     <p>Price: ${{ productQuery.read.data.value.price }}</p>
-    
+
     <button @click="handleUpdate" :disabled="productQuery.update.isPending.value">
       {{ productQuery.update.isPending.value ? 'Updating...' : 'Apply 10% Discount' }}
     </button>
-    
+
     <button @click="handleDelete" :disabled="productQuery.del.isPending.value">
       {{ productQuery.del.isPending.value ? 'Deleting...' : 'Delete Product' }}
     </button>
@@ -229,49 +236,49 @@ Use `useMultipleQuery` for CRUD operations on collections:
 
 ```vue
 <script setup lang="ts">
-import type { Entity } from 'gen-query'
+  import type { Entity } from 'gen-query'
 
-interface Product extends Entity<number> {
-  name: string
-  price: number
-  category: string
-}
-
-const token = ref(localStorage.getItem('token') || undefined)
-const productQuery = useMultipleQuery<Product, number>('products', token)
-
-const newProduct = ref({ name: '', price: 0, category: '' })
-
-const handleCreate = () => {
-  productQuery.create.mutate(newProduct.value, {
-    onSuccess: (created) => {
-      console.log('Created:', created)
-      newProduct.value = { name: '', price: 0, category: '' }
-    }
-  })
-}
-
-const handleUpdate = (product: Product) => {
-  productQuery.update.mutate({
-    ...product,
-    price: product.price * 1.1  // 10% increase
-  })
-}
-
-const handleDelete = (product: Product) => {
-  if (confirm(`Delete ${product.name}?`)) {
-    productQuery.del.mutate(product)
+  interface Product extends Entity<number> {
+    name: string
+    price: number
+    category: string
   }
-}
+
+  const token = ref(localStorage.getItem('token') || undefined)
+  const productQuery = useMultipleQuery<Product, number>('products', token)
+
+  const newProduct = ref({ name: '', price: 0, category: '' })
+
+  const handleCreate = () => {
+    productQuery.create.mutate(newProduct.value, {
+      onSuccess: (created) => {
+        console.log('Created:', created)
+        newProduct.value = { name: '', price: 0, category: '' }
+      },
+    })
+  }
+
+  const handleUpdate = (product: Product) => {
+    productQuery.update.mutate({
+      ...product,
+      price: product.price * 1.1, // 10% increase
+    })
+  }
+
+  const handleDelete = (product: Product) => {
+    if (confirm(`Delete ${product.name}?`)) {
+      productQuery.del.mutate(product)
+    }
+  }
 </script>
 
 <template>
   <div>
     <!-- Create Form -->
     <form @submit.prevent="handleCreate">
-      <input v-model="newProduct.name" placeholder="Name" required>
-      <input v-model.number="newProduct.price" type="number" placeholder="Price" required>
-      <input v-model="newProduct.category" placeholder="Category" required>
+      <input v-model="newProduct.name" placeholder="Name" required />
+      <input v-model.number="newProduct.price" type="number" placeholder="Price" required />
+      <input v-model="newProduct.category" placeholder="Category" required />
       <button type="submit" :disabled="productQuery.create.isPending.value">
         {{ productQuery.create.isPending.value ? 'Creating...' : 'Create Product' }}
       </button>
@@ -279,13 +286,15 @@ const handleDelete = (product: Product) => {
 
     <!-- Product List -->
     <div v-if="productQuery.read.isLoading.value">Loading products...</div>
-    <div v-else-if="productQuery.read.isError.value">Error: {{ productQuery.read.error.value?.message }}</div>
+    <div v-else-if="productQuery.read.isError.value">
+      Error: {{ productQuery.read.error.value?.message }}
+    </div>
     <div v-else>
       <div v-for="product in productQuery.read.data.value" :key="product.id" class="product-card">
         <h3>{{ product.name }}</h3>
         <p>Price: ${{ product.price }}</p>
         <p>Category: {{ product.category }}</p>
-        
+
         <button @click="handleUpdate(product)" :disabled="productQuery.update.isPending.value">
           Increase Price 10%
         </button>
@@ -293,7 +302,7 @@ const handleDelete = (product: Product) => {
           Delete
         </button>
       </div>
-      
+
       <button @click="productQuery.read.refetch()" :disabled="productQuery.read.isFetching.value">
         {{ productQuery.read.isFetching.value ? 'Refreshing...' : 'Refresh List' }}
       </button>
@@ -308,143 +317,146 @@ Use `usePaginatedQuery` for paginated data with advanced filtering and sorting:
 
 ```vue
 <script setup lang="ts">
-import { Pageable, Filters } from 'gen-query'
-import type { Entity } from 'gen-query'
+  import { Pageable, Filters } from 'gen-query'
+  import type { Entity } from 'gen-query'
 
-interface Product extends Entity<number> {
-  name: string
-  price: number
-  category: string
-  stock: number
-  createdAt: Date
-}
+  interface Product extends Entity<number> {
+    name: string
+    price: number
+    category: string
+    stock: number
+    createdAt: Date
+  }
 
-const token = ref(localStorage.getItem('token') || undefined)
+  const token = ref(localStorage.getItem('token') || undefined)
 
-// Configure pagination
-const pageable = new Pageable(
-  0,   // page number (0-indexed)
-  20,  // page size
-  [{ property: 'createdAt', direction: 'desc' }]  // sort by newest first
-)
+  // Configure pagination
+  const pageable = new Pageable(
+    0, // page number (0-indexed)
+    20, // page size
+    [{ property: 'createdAt', direction: 'desc' }] // sort by newest first
+  )
 
-// Configure filters
-const filters = ref(new Filters())
+  // Configure filters
+  const filters = ref(new Filters())
 
-// Filter by price range
-filters.value.price = {
-  operator: 'and',
-  constraints: [
-    { matchMode: 'gte', value: 50 },   // price >= 50
-    { matchMode: 'lte', value: 500 }   // price <= 500
-  ]
-}
-
-// Filter by category
-filters.value.category = {
-  operator: 'and',
-  constraints: [{ matchMode: 'eq', value: 'electronics' }]
-}
-
-// Filter by stock availability
-filters.value.stock = {
-  operator: 'and',
-  constraints: [{ matchMode: 'gt', value: 0 }]  // in stock
-}
-
-const productQuery = usePaginatedQuery<Product, number>(
-  'products',
-  pageable,
-  filters,
-  token
-)
-
-// Access paginated data
-const firstPage = computed(() => productQuery.read.data.value?.pages[0])
-const products = computed(() => firstPage.value?.content ?? [])
-const totalPages = computed(() => firstPage.value?.page.totalPages ?? 0)
-const totalElements = computed(() => firstPage.value?.page.totalElements ?? 0)
-const currentPage = computed(() => firstPage.value?.page.number ?? 0)
-
-// Get all products from all loaded pages (for infinite scroll)
-const allProducts = computed(() => 
-  productQuery.read.data.value?.pages.flatMap(page => page.content) ?? []
-)
-
-// Update filters dynamically
-const updatePriceFilter = (min: number, max: number) => {
+  // Filter by price range
   filters.value.price = {
     operator: 'and',
     constraints: [
-      { matchMode: 'gte', value: min },
-      { matchMode: 'lte', value: max }
-    ]
+      { matchMode: 'gte', value: 50 }, // price >= 50
+      { matchMode: 'lte', value: 500 }, // price <= 500
+    ],
   }
-}
 
-const updateCategoryFilter = (category: string) => {
-  if (category) {
-    filters.value.category = {
-      operator: 'and',
-      constraints: [{ matchMode: 'eq', value: category }]
-    }
-  } else {
-    delete filters.value.category
+  // Filter by category
+  filters.value.category = {
+    operator: 'and',
+    constraints: [{ matchMode: 'eq', value: 'electronics' }],
   }
-}
 
-const searchByName = (searchTerm: string) => {
-  if (searchTerm) {
-    filters.value.name = {
-      operator: 'and',
-      constraints: [{ matchMode: 'contains', value: searchTerm }]
-    }
-  } else {
-    delete filters.value.name
+  // Filter by stock availability
+  filters.value.stock = {
+    operator: 'and',
+    constraints: [{ matchMode: 'gt', value: 0 }], // in stock
   }
-}
+
+  const productQuery = usePaginatedQuery<Product, number>('products', pageable, filters, token)
+
+  // Access paginated data
+  const firstPage = computed(() => productQuery.read.data.value?.pages[0])
+  const products = computed(() => firstPage.value?.content ?? [])
+  const totalPages = computed(() => firstPage.value?.page.totalPages ?? 0)
+  const totalElements = computed(() => firstPage.value?.page.totalElements ?? 0)
+  const currentPage = computed(() => firstPage.value?.page.number ?? 0)
+
+  // Get all products from all loaded pages (for infinite scroll)
+  const allProducts = computed(
+    () => productQuery.read.data.value?.pages.flatMap((page) => page.content) ?? []
+  )
+
+  // Update filters dynamically
+  const updatePriceFilter = (min: number, max: number) => {
+    filters.value.price = {
+      operator: 'and',
+      constraints: [
+        { matchMode: 'gte', value: min },
+        { matchMode: 'lte', value: max },
+      ],
+    }
+  }
+
+  const updateCategoryFilter = (category: string) => {
+    if (category) {
+      filters.value.category = {
+        operator: 'and',
+        constraints: [{ matchMode: 'eq', value: category }],
+      }
+    } else {
+      delete filters.value.category
+    }
+  }
+
+  const searchByName = (searchTerm: string) => {
+    if (searchTerm) {
+      filters.value.name = {
+        operator: 'and',
+        constraints: [{ matchMode: 'contains', value: searchTerm }],
+      }
+    } else {
+      delete filters.value.name
+    }
+  }
 </script>
 
 <template>
   <div>
     <!-- Filters -->
     <div class="filters">
-      <input 
-        type="text" 
-        placeholder="Search by name..." 
+      <input
+        type="text"
+        placeholder="Search by name..."
         @input="searchByName($event.target.value)"
-      >
-      
+      />
+
       <select @change="updateCategoryFilter($event.target.value)">
         <option value="">All Categories</option>
         <option value="electronics">Electronics</option>
         <option value="accessories">Accessories</option>
         <option value="computers">Computers</option>
       </select>
-      
+
       <div>
-        Price: 
-        <input type="number" placeholder="Min" @change="updatePriceFilter($event.target.value, 500)">
+        Price:
+        <input
+          type="number"
+          placeholder="Min"
+          @change="updatePriceFilter($event.target.value, 500)"
+        />
         -
-        <input type="number" placeholder="Max" @change="updatePriceFilter(50, $event.target.value)">
+        <input
+          type="number"
+          placeholder="Max"
+          @change="updatePriceFilter(50, $event.target.value)"
+        />
       </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="productQuery.read.isLoading.value">Loading products...</div>
-    
+
     <!-- Error State -->
     <div v-else-if="productQuery.read.isError.value" class="error">
       Error: {{ productQuery.read.error.value?.message }}
     </div>
-    
+
     <!-- Product List -->
     <div v-else>
       <div class="summary">
-        Showing {{ products.length }} of {{ totalElements }} products
-        (Page {{ currentPage + 1 }} of {{ totalPages }})
+        Showing {{ products.length }} of {{ totalElements }} products (Page {{ currentPage + 1 }} of
+        {{ totalPages }})
       </div>
-      
+
       <div v-for="product in products" :key="product.id" class="product-card">
         <h3>{{ product.name }}</h3>
         <p>Price: ${{ product.price }}</p>
@@ -452,19 +464,24 @@ const searchByName = (searchTerm: string) => {
         <p>Stock: {{ product.stock }}</p>
         <p>Added: {{ new Date(product.createdAt).toLocaleDateString() }}</p>
       </div>
-      
+
       <!-- Pagination Controls -->
       <div class="pagination">
-        <button 
-          @click="productQuery.read.fetchPreviousPage()" 
-          :disabled="!productQuery.read.hasPreviousPage.value || productQuery.read.isFetchingPreviousPage.value"
+        <button
+          @click="productQuery.read.fetchPreviousPage()"
+          :disabled="
+            !productQuery.read.hasPreviousPage.value ||
+            productQuery.read.isFetchingPreviousPage.value
+          "
         >
           {{ productQuery.read.isFetchingPreviousPage.value ? 'Loading...' : 'Previous Page' }}
         </button>
-        
-        <button 
-          @click="productQuery.read.fetchNextPage()" 
-          :disabled="!productQuery.read.hasNextPage.value || productQuery.read.isFetchingNextPage.value"
+
+        <button
+          @click="productQuery.read.fetchNextPage()"
+          :disabled="
+            !productQuery.read.hasNextPage.value || productQuery.read.isFetchingNextPage.value
+          "
         >
           {{ productQuery.read.isFetchingNextPage.value ? 'Loading...' : 'Next Page' }}
         </button>
@@ -480,42 +497,46 @@ For infinite scroll, use all loaded pages:
 
 ```vue
 <script setup lang="ts">
-import { Pageable, Filters } from 'gen-query'
-import type { Entity } from 'gen-query'
+  import { Pageable, Filters } from 'gen-query'
+  import type { Entity } from 'gen-query'
 
-interface Post extends Entity<number> {
-  title: string
-  content: string
-  author: string
-}
-
-const pageable = new Pageable(0, 10)
-const filters = ref(new Filters())
-
-const postQuery = usePaginatedQuery<Post, number>('posts', pageable, filters)
-
-// Get all posts from all loaded pages
-const allPosts = computed(() => 
-  postQuery.read.data.value?.pages.flatMap(page => page.content) ?? []
-)
-
-// Infinite scroll handler
-const handleScroll = () => {
-  const scrollPosition = window.innerHeight + window.scrollY
-  const threshold = document.documentElement.scrollHeight - 100
-  
-  if (scrollPosition >= threshold && postQuery.read.hasNextPage.value && !postQuery.read.isFetchingNextPage.value) {
-    postQuery.read.fetchNextPage()
+  interface Post extends Entity<number> {
+    title: string
+    content: string
+    author: string
   }
-}
 
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-})
+  const pageable = new Pageable(0, 10)
+  const filters = ref(new Filters())
 
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+  const postQuery = usePaginatedQuery<Post, number>('posts', pageable, filters)
+
+  // Get all posts from all loaded pages
+  const allPosts = computed(
+    () => postQuery.read.data.value?.pages.flatMap((page) => page.content) ?? []
+  )
+
+  // Infinite scroll handler
+  const handleScroll = () => {
+    const scrollPosition = window.innerHeight + window.scrollY
+    const threshold = document.documentElement.scrollHeight - 100
+
+    if (
+      scrollPosition >= threshold &&
+      postQuery.read.hasNextPage.value &&
+      !postQuery.read.isFetchingNextPage.value
+    ) {
+      postQuery.read.fetchNextPage()
+    }
+  }
+
+  onMounted(() => {
+    window.addEventListener('scroll', handleScroll)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll)
+  })
 </script>
 
 <template>
@@ -527,14 +548,12 @@ onUnmounted(() => {
         <p>{{ post.content }}</p>
         <small>By {{ post.author }}</small>
       </div>
-      
+
       <div v-if="postQuery.read.isFetchingNextPage.value" class="loading">
         Loading more posts...
       </div>
-      
-      <div v-else-if="!postQuery.read.hasNextPage.value" class="end">
-        No more posts to load
-      </div>
+
+      <div v-else-if="!postQuery.read.hasNextPage.value" class="end">No more posts to load</div>
     </div>
   </div>
 </template>
@@ -549,9 +568,11 @@ onUnmounted(() => {
 Creates a login service for authentication.
 
 **Parameters:**
+
 - `resource` (optional): API endpoint for login. Default: `'auth'`
 
 **Returns:**
+
 ```typescript
 {
   login: {
@@ -572,15 +593,18 @@ Creates a login service for authentication.
 Fetches and manages a single entity by ID.
 
 **Type Parameters:**
+
 - `T`: Entity type extending `Entity<K>`
 - `K`: ID type (e.g., `number`, `string`)
 
 **Parameters:**
+
 - `resource`: API endpoint (e.g., `'products'`)
 - `id`: Reactive reference to entity ID
 - `token` (optional): Authentication token (reactive or getter)
 
 **Returns:**
+
 ```typescript
 {
   read: {
@@ -612,14 +636,17 @@ Fetches and manages a single entity by ID.
 Provides CRUD operations for a collection of entities.
 
 **Type Parameters:**
+
 - `T`: Entity type extending `Entity<K>`
 - `K`: ID type
 
 **Parameters:**
+
 - `resource`: API endpoint
 - `token` (optional): Authentication token
 
 **Returns:**
+
 ```typescript
 {
   read: {
@@ -644,16 +671,19 @@ Provides CRUD operations for a collection of entities.
 Fetches paginated entities with filtering and sorting.
 
 **Type Parameters:**
+
 - `T`: Entity type extending `Entity<K>`
 - `K`: ID type
 
 **Parameters:**
+
 - `resource`: API endpoint
 - `pageable`: Pagination configuration
 - `filters`: Reactive filters
 - `token` (optional): Authentication token
 
 **Returns:**
+
 ```typescript
 {
   read: {
@@ -692,6 +722,7 @@ interface Entity<K> {
 ```
 
 **Example:**
+
 ```typescript
 interface Product extends Entity<number> {
   name: string
@@ -737,12 +768,12 @@ Paginated response structure.
 ```typescript
 type Page<T> = {
   page: {
-    number: number        // Current page (0-indexed)
-    size: number          // Items per page
+    number: number // Current page (0-indexed)
+    size: number // Items per page
     totalElements: number // Total items across all pages
-    totalPages: number    // Total number of pages
+    totalPages: number // Total number of pages
   }
-  content: T[]           // Items in current page
+  content: T[] // Items in current page
 }
 ```
 
@@ -754,7 +785,7 @@ Sorting configuration.
 
 ```typescript
 type Sort = {
-  property: string           // Field to sort by
+  property: string // Field to sort by
   direction: 'asc' | 'desc' // Sort direction
 }
 ```
@@ -767,7 +798,7 @@ Filter configuration.
 
 ```typescript
 type FilterItem = {
-  operator: string        // 'and' or 'or'
+  operator: string // 'and' or 'or'
   constraints: Constraint[]
 }
 ```
@@ -780,8 +811,8 @@ Filter constraint.
 
 ```typescript
 type Constraint = {
-  matchMode: string  // eq, ne, lt, lte, gt, gte, contains, startsWith, endsWith, in
-  value: unknown     // Filter value
+  matchMode: string // eq, ne, lt, lte, gt, gte, contains, startsWith, endsWith, in
+  value: unknown // Filter value
 }
 ```
 
@@ -795,24 +826,21 @@ Pagination configuration class.
 
 ```typescript
 class Pageable {
-  constructor(
-    page: number = 0,
-    size: number = 30,
-    sort: Sort[] = []
-  )
-  
+  constructor(page: number = 0, size: number = 30, sort: Sort[] = [])
+
   toQueryParams(): string
 }
 ```
 
 **Example:**
+
 ```typescript
 const pageable = new Pageable(
-  0,   // first page
-  20,  // 20 items per page
+  0, // first page
+  20, // 20 items per page
   [
     { property: 'name', direction: 'asc' },
-    { property: 'price', direction: 'desc' }
+    { property: 'price', direction: 'desc' },
   ]
 )
 ```
@@ -826,19 +854,20 @@ Filter configuration class.
 ```typescript
 class Filters {
   [key: string]: FilterItem
-  
+
   toQueryParams(): string
 }
 ```
 
 **Example:**
+
 ```typescript
 const filters = new Filters()
 
 // Single constraint
 filters.category = {
   operator: 'and',
-  constraints: [{ matchMode: 'eq', value: 'electronics' }]
+  constraints: [{ matchMode: 'eq', value: 'electronics' }],
 }
 
 // Multiple constraints (AND)
@@ -846,8 +875,8 @@ filters.price = {
   operator: 'and',
   constraints: [
     { matchMode: 'gte', value: 100 },
-    { matchMode: 'lte', value: 500 }
-  ]
+    { matchMode: 'lte', value: 500 },
+  ],
 }
 
 // Multiple constraints (OR)
@@ -855,37 +884,37 @@ filters.status = {
   operator: 'or',
   constraints: [
     { matchMode: 'eq', value: 'active' },
-    { matchMode: 'eq', value: 'pending' }
-  ]
+    { matchMode: 'eq', value: 'pending' },
+  ],
 }
 
 // String matching
 filters.name = {
   operator: 'and',
-  constraints: [{ matchMode: 'contains', value: 'laptop' }]
+  constraints: [{ matchMode: 'contains', value: 'laptop' }],
 }
 
 // Date filtering
 filters.createdAt = {
   operator: 'and',
-  constraints: [{ matchMode: 'gte', value: new Date('2024-01-01') }]
+  constraints: [{ matchMode: 'gte', value: new Date('2024-01-01') }],
 }
 ```
 
 **Available Match Modes:**
 
-| Match Mode | Description | Example |
-|------------|-------------|---------|
-| `eq` | Equals | `{ matchMode: 'eq', value: 'active' }` |
-| `ne` | Not equals | `{ matchMode: 'ne', value: 'deleted' }` |
-| `lt` | Less than | `{ matchMode: 'lt', value: 100 }` |
-| `lte` | Less than or equal | `{ matchMode: 'lte', value: 100 }` |
-| `gt` | Greater than | `{ matchMode: 'gt', value: 50 }` |
-| `gte` | Greater than or equal | `{ matchMode: 'gte', value: 50 }` |
-| `contains` | Contains substring | `{ matchMode: 'contains', value: 'laptop' }` |
-| `startsWith` | Starts with | `{ matchMode: 'startsWith', value: 'Pro' }` |
-| `endsWith` | Ends with | `{ matchMode: 'endsWith', value: 'Pro' }` |
-| `in` | In list | `{ matchMode: 'in', value: 'active,pending' }` |
+| Match Mode   | Description           | Example                                        |
+| ------------ | --------------------- | ---------------------------------------------- |
+| `eq`         | Equals                | `{ matchMode: 'eq', value: 'active' }`         |
+| `ne`         | Not equals            | `{ matchMode: 'ne', value: 'deleted' }`        |
+| `lt`         | Less than             | `{ matchMode: 'lt', value: 100 }`              |
+| `lte`        | Less than or equal    | `{ matchMode: 'lte', value: 100 }`             |
+| `gt`         | Greater than          | `{ matchMode: 'gt', value: 50 }`               |
+| `gte`        | Greater than or equal | `{ matchMode: 'gte', value: 50 }`              |
+| `contains`   | Contains substring    | `{ matchMode: 'contains', value: 'laptop' }`   |
+| `startsWith` | Starts with           | `{ matchMode: 'startsWith', value: 'Pro' }`    |
+| `endsWith`   | Ends with             | `{ matchMode: 'endsWith', value: 'Pro' }`      |
+| `in`         | In list               | `{ matchMode: 'in', value: 'active,pending' }` |
 
 ---
 
@@ -905,6 +934,7 @@ class ApiError extends Error {
 ```
 
 **Example:**
+
 ```typescript
 const { error } = productQuery.read
 
@@ -925,20 +955,21 @@ Cache update strategy for mutations.
 
 ```typescript
 enum UpdateStrategy {
-  None,        // No automatic cache updates
-  Invalidate,  // Invalidate and refetch (recommended)
-  Optimistic   // Optimistic updates
+  None, // No automatic cache updates
+  Invalidate, // Invalidate and refetch (recommended)
+  Optimistic, // Optimistic updates
 }
 ```
 
 **Usage:**
+
 ```typescript
 import { UpdateStrategy } from 'gen-query'
 
 export default defineNuxtConfig({
   genQuery: {
-    update: UpdateStrategy.Optimistic
-  }
+    update: UpdateStrategy.Optimistic,
+  },
 })
 ```
 
@@ -947,6 +978,7 @@ export default defineNuxtConfig({
 Your backend API must follow the REST specification detailed in [BACKEND_API.md](/BACKEND_API.md).
 
 **Key requirements:**
+
 - RESTful endpoints with JSON request/response
 - Standard CRUD operations (GET, POST, PUT, DELETE)
 - Pagination endpoint with `/page` suffix
@@ -995,14 +1027,12 @@ MIT License - see [LICENSE](LICENSE) for details
 - [TanStack Query Documentation](https://tanstack.com/query/latest)
 
 <!-- Badges -->
+
 [npm-version-src]: https://img.shields.io/npm/v/gen-query/latest.svg?style=flat&colorA=020420&colorB=00DC82
 [npm-version-href]: https://npmjs.com/package/gen-query
-
 [npm-downloads-src]: https://img.shields.io/npm/dm/gen-query.svg?style=flat&colorA=020420&colorB=00DC82
 [npm-downloads-href]: https://npm.chart.dev/gen-query
-
 [license-src]: https://img.shields.io/npm/l/gen-query.svg?style=flat&colorA=020420&colorB=00DC82
 [license-href]: https://npmjs.com/package/gen-query
-
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt.js
 [nuxt-href]: https://nuxt.com

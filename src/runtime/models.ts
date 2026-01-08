@@ -14,7 +14,16 @@ export class ApiError extends Error {
   status: string
   content?: object
 
-  constructor(message: string, type: string, name: string, stack: string | undefined, statusCode: number, status: string, content: object, cause: unknown) {
+  constructor(
+    message: string,
+    type: string,
+    name: string,
+    stack: string | undefined,
+    statusCode: number,
+    status: string,
+    content: object,
+    cause: unknown
+  ) {
     super(message, { cause: cause })
     this.message = message
     this.cause = cause
@@ -62,10 +71,9 @@ export const handleDates = <T>(body: T): T => {
   for (const key of Object.keys(body)) {
     const value = (body as Record<string, unknown>)[key]
     if (isIsoDateString(value)) {
-      (body as Record<string, unknown>)[key] = new Date(value as string)
-    }
-    else if (value && typeof value === 'object') {
-      (body as Record<string, unknown>)[key] = handleDates(value)
+      ;(body as Record<string, unknown>)[key] = new Date(value as string)
+    } else if (value && typeof value === 'object') {
+      ;(body as Record<string, unknown>)[key] = handleDates(value)
     }
   }
   return body
@@ -89,18 +97,21 @@ export class Pageable {
    * Converts pagination configuration to query parameters string.
    * @returns Query parameters string.
    */
-  public toQueryParams = (): string => [
-    `size=${encodeURIComponent(this.size)}`,
-    `page=${encodeURIComponent(this.page)}`,
-    ...this.sort.map(sort => `sort=${encodeURIComponent(sort.property)},${encodeURIComponent(sort.direction)}`),
-  ].join('&')
+  public toQueryParams = (): string =>
+    [
+      `size=${encodeURIComponent(this.size)}`,
+      `page=${encodeURIComponent(this.page)}`,
+      ...this.sort.map(
+        (sort) => `sort=${encodeURIComponent(sort.property)},${encodeURIComponent(sort.direction)}`
+      ),
+    ].join('&')
 }
 
 /**
  * Class representing filter configuration.
  */
 export class Filters {
-  [key: string]: FilterItem | (() => string);
+  [key: string]: FilterItem | (() => string)
 
   /**
    * Converts filters to query parameters string.
@@ -112,10 +123,13 @@ export class Filters {
     for (const [field, filterItem] of Object.entries(this)) {
       if (typeof filterItem === 'function') continue
 
-      const constraints = filterItem.constraints.filter(c => c.value)
+      const constraints = filterItem.constraints.filter((c) => c.value)
       if (constraints.length === 0) continue
 
-      const conditions = constraints.map(c => `${field}:${c.matchMode}:${c.value instanceof Date ? formatDate(c.value.toISOString()) : c.value}`)
+      const conditions = constraints.map(
+        (c) =>
+          `${field}:${c.matchMode}:${c.value instanceof Date ? formatDate(c.value.toISOString()) : c.value}`
+      )
       const separator = filterItem.operator === 'and' ? '&' : '|'
       params.push(`filter=${encodeURIComponent(conditions.join(separator))}`)
     }

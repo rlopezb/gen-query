@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, setCookie, getCookie, proxyRequest } from 'h3'
 import type { Login, User } from '../../types'
-import { useLoginService } from '../../composables/useLoginService'
+import { useLoginService } from '../../composables/useLoginService.server'
 
 export default defineEventHandler(async (event) => {
   if (event.path.endsWith('/login')) {
@@ -13,10 +13,11 @@ export default defineEventHandler(async (event) => {
       secure: true,
       sameSite: 'strict',
     })
-  }
-  else {
+  } else {
     const userCookie = getCookie(event, 'user')
-    const token = userCookie ? JSON.parse(Buffer.from(userCookie, 'base64').toString('utf-8')).token : null
+    const token = userCookie
+      ? JSON.parse(Buffer.from(userCookie, 'base64').toString('utf-8')).token
+      : null
     return proxyRequest(event, event.path, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

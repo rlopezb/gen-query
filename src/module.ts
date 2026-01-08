@@ -22,7 +22,9 @@ export default defineNuxtModule<ModuleOptions>({
   },
 
   setup(options, nuxt) {
-    const publicConfig = nuxt.options.runtimeConfig.public as { genQuery?: { baseURL?: string, cachedPages?: number, update?: UpdateStrategy } }
+    const publicConfig = nuxt.options.runtimeConfig.public as {
+      genQuery?: { baseURL?: string; cachedPages?: number; update?: UpdateStrategy }
+    }
     nuxt.options.runtimeConfig.public.genQuery = defu(publicConfig.genQuery ?? {}, {
       baseURL: options.baseURL,
       cachedPages: options.cachedPages,
@@ -39,7 +41,10 @@ export default defineNuxtModule<ModuleOptions>({
       { name: 'useLoginService', from: resolver.resolve('runtime/composables/useLoginService') },
       { name: 'useSingleQuery', from: resolver.resolve('runtime/composables/useSingleQuery') },
       { name: 'useMultipleQuery', from: resolver.resolve('runtime/composables/useMultipleQuery') },
-      { name: 'usePaginatedQuery', from: resolver.resolve('runtime/composables/usePaginatedQuery') },
+      {
+        name: 'usePaginatedQuery',
+        from: resolver.resolve('runtime/composables/usePaginatedQuery'),
+      },
     ]
 
     composables.forEach(({ name, from }) => {
@@ -50,5 +55,14 @@ export default defineNuxtModule<ModuleOptions>({
   },
 })
 
-export type { Login, User, Entity, Page, FilterItem, Constraint, Sort, UpdateStrategy } from './runtime/types'
+export type {
+  Login,
+  User,
+  Entity,
+  Page,
+  FilterItem,
+  Constraint,
+  Sort,
+  UpdateStrategy,
+} from './runtime/types'
 export type { Pageable, Filters, ApiError } from './runtime/models'
