@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.2.2",
-    "@tanstack/vue-query": "^5.92.5"
+    "@tanstack/vue-query": "^5.92.8"
   },
   "devDependencies": {
     "@nuxt/devtools": "^3.1.1",
@@ -55,12 +55,12 @@
     "changelogen": "^0.6.2",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-prettier": "^5.5.5",
     "nuxt": "^4.2.2",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.0",
     "typescript": "~5.9.3",
     "unbuild": "^3.6.1",
-    "vitest": "^4.0.16",
+    "vitest": "^4.0.17",
     "vue-tsc": "^3.2.2"
   },
   "packageManager": "pnpm@10.26.1+sha512.664074abc367d2c9324fdc18037097ce0a8f126034160f709928e9e9f95d98714347044e5c3164d65bd5da6c59c6be362b107546292a8eecb7999196e5ce58fa"
