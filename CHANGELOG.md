@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.9.0
+
+[compare changes](https://github.com/rlopezb/gen-query/compare/v1.8.0...v1.9.0)
+
+### 🚀 Enhancements
+
+- Initialize Vue Query plugin with SSR hydration/dehydration for Nuxt 3 ([afd69f8](https://github.com/rlopezb/gen-query/commit/afd69f8))
+
+### 🩹 Fixes
+
+- Correct state key for Vue Query hydration in Nuxt plugin ([bbb881b](https://github.com/rlopezb/gen-query/commit/bbb881b))
+
+### 🏡 Chore
+
+- **release:** V1.8.0 ([5e38b30](https://github.com/rlopezb/gen-query/commit/5e38b30))
+
+### ❤️ Contributors
+
+- Rafael López Benavente <rlopezb@gmail.com>
+
 ## v1.8.0
 
 [compare changes](https://github.com/rlopezb/gen-query/compare/v1.7.7...v1.8.0)
