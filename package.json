@@ -42,26 +42,26 @@
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
   },
   "dependencies": {
-    "@nuxt/kit": "^4.2.2",
-    "@tanstack/vue-query": "^5.92.8"
+    "@nuxt/kit": "^4.3.1",
+    "@tanstack/vue-query": "^5.92.9"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^3.1.1",
-    "@nuxt/eslint-config": "^1.12.1",
+    "@nuxt/devtools": "^3.2.2",
+    "@nuxt/eslint-config": "^1.15.2",
     "@nuxt/module-builder": "^1.0.2",
-    "@nuxt/schema": "^4.2.2",
+    "@nuxt/schema": "^4.3.1",
     "@nuxt/test-utils": "^3.23.0",
     "@types/node": "latest",
     "changelogen": "^0.6.2",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
-    "nuxt": "^4.2.2",
-    "prettier": "^3.8.0",
+    "nuxt": "^4.3.1",
+    "prettier": "^3.8.1",
     "typescript": "~5.9.3",
     "unbuild": "^3.6.1",
-    "vitest": "^4.0.17",
-    "vue-tsc": "^3.2.2"
+    "vitest": "^4.0.18",
+    "vue-tsc": "^3.2.5"
   },
   "packageManager": "pnpm@10.26.1+sha512.664074abc367d2c9324fdc18037097ce0a8f126034160f709928e9e9f95d98714347044e5c3164d65bd5da6c59c6be362b107546292a8eecb7999196e5ce58fa"
 }
